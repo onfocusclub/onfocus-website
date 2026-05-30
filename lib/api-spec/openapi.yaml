@@ -1,0 +1,443 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: OnFocus multi-vendor discovery platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: listings
+    description: Artist, vendor, and venue listings
+  - name: categories
+    description: Category browsing
+  - name: discovery
+    description: Discovery and exploration
+  - name: inquiry
+    description: Contact and partner inquiries
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /listings:
+    get:
+      operationId: listListings
+      tags: [listings]
+      summary: List all listings
+      description: Returns paginated listings with optional filters
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [artist, vendor, venue]
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: city
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: featured
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 12
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of listings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingsPage"
+    post:
+      operationId: createListing
+      tags: [listings]
+      summary: Create a new listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListingInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+
+  /listings/{id}:
+    get:
+      operationId: getListing
+      tags: [listings]
+      summary: Get listing by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Listing details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+        "404":
+          description: Not found
+
+  /listings/featured:
+    get:
+      operationId: getFeaturedListings
+      tags: [discovery]
+      summary: Get featured listings across all types
+      description: Returns a curated set of featured artists, vendors, and venues
+      responses:
+        "200":
+          description: Featured listings grouped by type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeaturedListings"
+
+  /listings/stats:
+    get:
+      operationId: getPlatformStats
+      tags: [discovery]
+      summary: Get platform statistics
+      description: Returns platform-wide counts for trust building
+      responses:
+        "200":
+          description: Platform statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformStats"
+
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List all categories grouped by type
+      responses:
+        "200":
+          description: Categories grouped by listing type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoriesGrouped"
+
+  /inquiry:
+    post:
+      operationId: submitInquiry
+      tags: [inquiry]
+      summary: Submit a contact or partner inquiry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InquiryInput"
+      responses:
+        "201":
+          description: Inquiry submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InquiryConfirmation"
+
+  /partner-applications:
+    post:
+      operationId: submitPartnerApplication
+      tags: [inquiry]
+      summary: Submit a join-as-partner application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartnerApplicationInput"
+      responses:
+        "201":
+          description: Application submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InquiryConfirmation"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Listing:
+      type: object
+      required:
+        - id
+        - type
+        - name
+        - category
+        - city
+        - rating
+        - reviewCount
+        - bio
+        - coverImage
+        - images
+        - tags
+        - verified
+        - featured
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [artist, vendor, venue]
+        name:
+          type: string
+        category:
+          type: string
+        city:
+          type: string
+        rating:
+          type: number
+        reviewCount:
+          type: integer
+        bio:
+          type: string
+        coverImage:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        verified:
+          type: boolean
+        featured:
+          type: boolean
+        yearsActive:
+          type: ["integer", "null"]
+        eventsCompleted:
+          type: ["integer", "null"]
+        priceRange:
+          type: ["string", "null"]
+        capacity:
+          type: ["integer", "null"]
+        amenities:
+          type: ["array", "null"]
+          items:
+            type: string
+
+    ListingsPage:
+      type: object
+      required:
+        - listings
+        - total
+        - limit
+        - offset
+      properties:
+        listings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Listing"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ListingInput:
+      type: object
+      required:
+        - type
+        - name
+        - category
+        - city
+        - bio
+      properties:
+        type:
+          type: string
+          enum: [artist, vendor, venue]
+        name:
+          type: string
+        category:
+          type: string
+        city:
+          type: string
+        bio:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        priceRange:
+          type: string
+        capacity:
+          type: integer
+
+    FeaturedListings:
+      type: object
+      required:
+        - artists
+        - vendors
+        - venues
+      properties:
+        artists:
+          type: array
+          items:
+            $ref: "#/components/schemas/Listing"
+        vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/Listing"
+        venues:
+          type: array
+          items:
+            $ref: "#/components/schemas/Listing"
+
+    PlatformStats:
+      type: object
+      required:
+        - totalProfessionals
+        - eventsSupported
+        - citiesCovered
+        - verifiedProfiles
+      properties:
+        totalProfessionals:
+          type: integer
+        eventsSupported:
+          type: integer
+        citiesCovered:
+          type: integer
+        verifiedProfiles:
+          type: integer
+
+    CategoryItem:
+      type: object
+      required:
+        - slug
+        - label
+        - count
+      properties:
+        slug:
+          type: string
+        label:
+          type: string
+        count:
+          type: integer
+
+    CategoriesGrouped:
+      type: object
+      required:
+        - artists
+        - vendors
+        - venues
+      properties:
+        artists:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryItem"
+        vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryItem"
+        venues:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryItem"
+
+    InquiryInput:
+      type: object
+      required:
+        - name
+        - email
+        - message
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        message:
+          type: string
+        subject:
+          type: string
+
+    PartnerApplicationInput:
+      type: object
+      required:
+        - name
+        - email
+        - type
+        - category
+        - city
+        - description
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        type:
+          type: string
+          enum: [artist, vendor, venue]
+        category:
+          type: string
+        city:
+          type: string
+        description:
+          type: string
+        website:
+          type: string
+
+    InquiryConfirmation:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string

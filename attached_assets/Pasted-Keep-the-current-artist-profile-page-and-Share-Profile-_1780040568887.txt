@@ -1,0 +1,127 @@
+Keep the current artist profile page and Share Profile section design EXACTLY the same. Do not redesign the layout, spacing, typography, navigation bar, cards, buttons, colors, or overall UI style.
+
+Only implement the following improvements and functionality updates.
+
+---
+
+1. FIX HERO / COVER IMAGE SECTION
+
+---
+
+CURRENT ISSUE:
+The hero cover image at the top of Dhruv’s profile page is not positioned properly. Important parts of the artist are getting awkwardly cropped and the banner does not feel visually balanced or premium.
+
+REQUIREMENTS:
+
+* Use the uploaded performance image as the hero cover image.
+* Ensure the artist’s face and guitar remain clearly visible across all screen sizes.
+* Improve image positioning and responsiveness.
+* Prevent awkward cropping or zooming.
+* Maintain a cinematic wide-banner premium look.
+* Use proper object-fit and object-position handling.
+* Add a subtle dark overlay/gradient if needed for readability and visual balance.
+* Keep the hero section feeling:
+  • Modern
+  • Premium
+  • Editorial
+  • Clean
+  • Professional
+
+IMPORTANT:
+
+* The overlapping white profile information card must remain exactly as it is.
+* Do not change any page structure or spacing.
+* Do not redesign the About section, Portfolio section, buttons, or cards.
+* Only improve:
+  • Hero image quality
+  • Hero image alignment
+  • Responsive behavior
+  • Visual balance of the top banner
+
+Ensure the cover image looks polished on:
+
+* Desktop
+* Tablet
+* Mobile
+
+The final result should look like a premium modern artist showcase page.
+
+---
+
+2. ADD ARTIST PROFILE IMAGE INSIDE WHITE INFO CARD
+
+---
+
+Inside the white overlapping artist information card where “Dhruv” is written, add a clean professional circular profile image/avatar of the artist.
+
+REQUIREMENTS:
+
+* Use one of the uploaded artist images as the profile picture.
+* The profile image should appear beside or above the artist name depending on responsive layout.
+* Style:
+  • Circular crop
+  • Clean border or subtle shadow
+  • Premium modern look
+  • Proper spacing/alignment
+  • Responsive on all screen sizes
+
+IMPORTANT:
+
+* Do not make it oversized.
+* Keep it elegant and balanced with the existing minimal UI.
+* Maintain the current white card design.
+* Do not redesign the typography or button layout.
+
+The final profile card should feel similar to modern artist/creator portfolio platforms.
+
+---
+
+3. ADD REAL SHARE PROFILE FUNCTIONALITY
+
+---
+
+Keep the current Share Profile UI exactly the same.
+
+Do not redesign:
+
+* Icons
+* Layout
+* Styling
+* Spacing
+* Buttons
+
+Only add real functionality behind the existing UI.
+
+REQUIREMENTS:
+
+A. Copy Link Functionality
+
+* When the user clicks the share/link icon, automatically copy the current artist profile URL.
+* Show a small elegant toast notification:
+  “Profile link copied”
+
+B. WhatsApp Sharing
+
+* Clicking the WhatsApp icon should open WhatsApp sharing with:
+  “Check out this artist on OnFocus”
+
+  * current profile URL
+
+C. Mobile Native Share Support
+
+* Use the Web Share API if supported.
+* Allow direct sharing through installed apps on mobile devices.
+
+D. Dynamic URLs
+
+* Use the current page URL dynamically.
+* Do not hardcode links.
+
+E. Interactions
+
+* Add only subtle smooth interactions and transitions.
+* Maintain the current minimal premium design language.
+
+IMPORTANT:
+Do not redesign or restructure anything.
+Only improve the hero banner, add the profile image, and add functional share behavior behind the existing UI.

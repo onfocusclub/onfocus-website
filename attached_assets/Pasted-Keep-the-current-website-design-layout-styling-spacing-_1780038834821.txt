@@ -1,0 +1,130 @@
+Keep the current website design, layout, styling, spacing, colors, animations, and overall structure EXACTLY the same. Do not redesign or change any existing UI sections unnecessarily.
+
+I only want the following additions and updates inside the Artists section.
+
+-----------------------------------
+1. ADD FILTER FUNCTIONALITY
+-----------------------------------
+
+In the Artists listing/discovery section, add a clean modern filter bar.
+
+Filters required:
+- City
+- Language
+- Price Range
+
+Filter UI style:
+- Minimal
+- Clean white/grey aesthetic
+- Rounded inputs
+- Subtle borders
+- Responsive on mobile
+
+Functionality:
+- Users should be able to filter artists based on:
+  • City
+  • Languages spoken/performed
+  • Starting price
+
+Example:
+City → Jhansi
+Language → Hindi
+Price → Under ₹10,000
+
+Do not overdesign the filter section.
+Keep it elegant and aligned with the current website style.
+
+-----------------------------------
+2. ADD A REAL ARTIST PROFILE
+-----------------------------------
+
+Add a real performer profile inside the Artists section using the existing card/profile format already present on the website.
+
+Do NOT change the existing artist card design.
+Simply populate it properly with the following real data.
+
+-----------------------------------
+ARTIST DETAILS
+-----------------------------------
+
+Name:
+Dhruv
+
+Title:
+Solo Singer, Guitarist
+
+Location:
+Jhansi, Uttar Pradesh, India
+
+Languages:
+- Hindi
+- Hinglish
+
+Categories:
+- Vocalist
+- Guitarist
+- Singer
+- Live Performer
+- Acoustic Artist
+- Cover Song Artist
+
+Price:
+Starting from ₹8,000
+
+Suitable For:
+- College Festivals
+- Café Performances
+- Private Gatherings
+- Musical Evenings
+- Community Events
+
+About:
+Based in Jhansi, this talented vocalist and guitarist has earned recognition for his soulful voice, engaging stage presence, and heartfelt acoustic performances. Known for delivering soft melodies and romantic cover songs, he has become a familiar face in the city's live music scene.
+
+With experience performing at multiple university-level events and live music shows, he has captivated audiences through his ability to connect emotions with music. He has also been a featured performer at Jhansi Open Mic 4.0, where his performances received an enthusiastic response from the audience.
+
+His repertoire primarily includes popular Hindi acoustic covers and contemporary romantic tracks, making him an excellent choice for open mics, café gigs, cultural festivals, college events, and intimate live music evenings.
+
+Whether it's a calm acoustic set or an emotionally rich live performance, he brings warmth, authenticity, and musical passion to every stage he performs on.
+
+Why Pick Him:
+- Soulful Live Performances
+- Experienced Stage Artist
+- Perfect for Soft & Romantic Events
+- Strong Audience Connection
+- Great for Cafés, Open Mics & College Events
+
+-----------------------------------
+3. UPLOAD AND USE PROVIDED PHOTOS
+-----------------------------------
+
+Use the uploaded artist photos provided by me for Dhruv’s profile/gallery.
+
+Requirements:
+- Use the photos in a clean professional gallery or carousel
+- Maintain consistent image ratio
+- Keep the current website aesthetic
+- Add subtle hover effects only
+- Optimize image loading and responsiveness
+
+Suggested usage:
+- One primary cover/profile image
+- Remaining images inside gallery/portfolio section
+
+-----------------------------------
+4. IMPORTANT
+-----------------------------------
+
+DO NOT:
+- Redesign the website
+- Change homepage layout
+- Modify typography system
+- Alter colors
+- Change spacing globally
+- Add flashy effects
+
+ONLY:
+- Add filtering functionality
+- Add Dhruv artist profile properly
+- Upload and integrate the provided images
+- Keep everything visually consistent with the current website

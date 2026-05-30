@@ -1,0 +1,189 @@
+Create a premium modern Login / Sign Up modal for the OnFocus website.
+
+IMPORTANT:
+Maintain the current OnFocus UI style exactly.
+Do NOT redesign the website.
+The authentication experience must feel minimal, premium, clean, and modern.
+
+STYLE:
+- White / soft grey / black palette
+- Rounded corners
+- Minimal typography
+- Soft shadows
+- Editorial spacing
+- Clean modern startup aesthetic
+- Smooth subtle animations
+
+The modal should feel similar to modern platforms like Airbnb, Notion, or Pinterest.
+
+--------------------------------------------------
+AUTHENTICATION FLOW
+--------------------------------------------------
+
+This should be a combined:
+- Login
+- Sign Up
+
+experience in ONE modal.
+
+Do not create separate pages.
+
+Users should be able to:
+- Sign in
+- Create account
+
+through the same flow automatically.
+
+--------------------------------------------------
+LOGIN BUTTON IN NAVBAR
+--------------------------------------------------
+
+Add a clean minimal:
+“Login / Sign Up”
+button in the top navigation bar.
+
+Requirements:
+- Match existing navbar style
+- Premium minimal look
+- Rounded button
+- Subtle hover effect
+- Maintain spacing consistency
+
+DO NOT disturb existing navigation layout.
+
+--------------------------------------------------
+LOGIN MODAL
+--------------------------------------------------
+
+When user clicks:
+“Login / Sign Up”
+
+Open a centered premium modal popup.
+
+MODAL REQUIREMENTS:
+- Smooth fade/scale animation
+- Dark subtle background overlay
+- Rounded corners
+- Soft shadow
+- Proper spacing
+- Fully responsive
+
+--------------------------------------------------
+MODAL CONTENT
+--------------------------------------------------
+
+TOP SECTION:
+Headline:
+“Welcome to OnFocus”
+
+Subheadline:
+Discover artists, vendors, and venues for meaningful experiences.
+
+--------------------------------------------------
+SOCIAL LOGIN OPTIONS
+--------------------------------------------------
+
+ONLY include:
+
+1. Continue with Google
+2. Continue with Facebook
+
+Do NOT include:
+- Phone login
+- OTP login
+- Email/password forms
+
+--------------------------------------------------
+BUTTON DESIGN
+--------------------------------------------------
+
+Social login buttons should:
+- Be large and clean
+- Have proper brand icons
+- Rounded corners
+- Premium spacing
+- Subtle hover interaction
+- Minimal style
+
+Maintain visual consistency with existing OnFocus aesthetic.
+
+--------------------------------------------------
+AUTH BEHAVIOR
+--------------------------------------------------
+
+Requirements:
+- If user already exists → login
+- If new user → create account automatically
+- Keep the experience seamless
+
+--------------------------------------------------
+USER EXPERIENCE
+--------------------------------------------------
+
+Allow users to:
+- Close modal easily
+- Click outside modal to close
+- Open modal smoothly on all devices
+
+Maintain:
+- Fast loading
+- Lightweight feel
+- Minimal friction
+
+--------------------------------------------------
+AFTER LOGIN
+--------------------------------------------------
+
+After successful login:
+- Replace navbar Login button with profile/avatar icon
+- Add dropdown:
+  • Dashboard
+  • Saved
+  • Logout
+
+Keep dropdown minimal and premium.
+
+--------------------------------------------------
+RESPONSIVENESS
+--------------------------------------------------
+
+Ensure excellent responsive behavior on:
+- Desktop
+- Tablet
+- Mobile
+
+Mobile modal should:
+- Fit perfectly
+- Maintain clean spacing
+- Avoid clutter
+
+--------------------------------------------------
+TECHNICAL
+--------------------------------------------------
+
+Prepare authentication structure for:
+- Google OAuth
+- Facebook OAuth
+
+Keep implementation scalable for future:
+- Dashboard
+- Wishlist
+- Partner onboarding
+- Profile management
+
+--------------------------------------------------
+IMPORTANT RESTRICTIONS
+--------------------------------------------------
+
+DO NOT:
+- Redesign homepage
+- Change existing typography system
+- Add flashy gradients
+- Add excessive animations
+- Create bulky auth pages
+- Use outdated form UI
+
+ONLY:
+- Add a clean premium authentication modal
+- Maintain the existing OnFocus design language
+- Make the auth experience modern and frictionless
