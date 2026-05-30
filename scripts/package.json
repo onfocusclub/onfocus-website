@@ -8,7 +8,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "@types/node": "catalog:",
+    "drizzle-orm": "catalog:",
     "tsx": "catalog:"
   }
 }

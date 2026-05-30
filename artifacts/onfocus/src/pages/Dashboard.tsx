@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { User, Bookmark, Briefcase, Settings, ChevronRight, Star, MapPin } from "lucide-react";
+import { User, Bookmark, Briefcase, Settings, ChevronRight, Star, MapPin, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 
