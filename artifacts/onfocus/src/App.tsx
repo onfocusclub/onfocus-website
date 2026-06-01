@@ -19,6 +19,7 @@ import { Contact } from "@/pages/Contact";
 import { Join } from "@/pages/Join";
 import { ListingProfile } from "@/pages/ListingProfile";
 import { Dashboard } from "@/pages/Dashboard";
+import AdminPanel from "@/pages/AdminPanel"; 
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ function Router() {
           <Route path="/join" component={Join} />
           <Route path="/listing/:id" component={ListingProfile} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/admin" component={AdminPanel} />
           <Route component={NotFound} />
         </Switch>
       </main>
