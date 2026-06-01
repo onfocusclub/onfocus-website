@@ -5,7 +5,9 @@ packages:
   - scripts
 
 allowBuilds:
+  '@firebase/util': true
   esbuild: true
+  protobufjs: true
 
 autoInstallPeers: false
 
