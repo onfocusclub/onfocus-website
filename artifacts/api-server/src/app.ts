@@ -30,7 +30,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/api/partner-applications", partnerApplicationsRouter);  
 app.use("/api", router);
-app.use("/api/partner-applications", partnerApplicationsRouter);
-
 export default app;

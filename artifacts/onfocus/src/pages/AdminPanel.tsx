@@ -10,14 +10,15 @@ type Status = "pending" | "approved" | "rejected";
 
 interface Application {
   id: number;
-  partner_type: string;
-  business_name: string;
-  contact_name: string;
+  type: string;          
+  name: string;          
   email: string;
   phone: string | null;
   city: string;
+  category: string | null;
   description: string | null;
   price_range: string | null;
+  website: string | null;
   portfolio_urls: string[];
   status: Status;
   admin_notes: string | null;
@@ -25,7 +26,6 @@ interface Application {
   reviewed_at: string | null;
   reviewed_by: string | null;
 }
-
 interface Pagination {
   page: number;
   limit: number;

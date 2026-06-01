@@ -77,6 +77,30 @@ export function Join() {
   async function handleSubmit() {
   setIsSubmitting(true);
   try {
+    // 1. Save to your Neon DB via backend
+    const apiRes = await fetch(`${import.meta.env.VITE_API_URL}/api/partner-applications`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+  partnerType:   type,         
+  businessName:  form.name,     
+  contactName:   form.name,   
+  email:         form.email,
+  phone:         form.phone || null,
+  city:          form.city,
+  category:      form.category,
+  description:   form.bio,
+  priceRange:    form.priceRange || null,
+  portfolioUrls: [],
+}),
+    });
+
+    if (!apiRes.ok) {
+      const err = await apiRes.json();
+      throw new Error(err.error || "Failed to save application");
+    }
+
+    // 2. Send email notification
     await sendPartnerNotification({
       type:        type!,
       name:        form.name,
@@ -90,10 +114,11 @@ export function Join() {
       website:     form.website,
       mediaCount:  mediaFiles.length,
     });
+
     setIsSuccess(true);
   } catch (err) {
-    console.error("EmailJS error:", err);
-    alert("Submission failed: " + JSON.stringify(err));
+    console.error("Submission error:", err);
+    alert("Submission failed: " + (err instanceof Error ? err.message : JSON.stringify(err)));
   } finally {
     setIsSubmitting(false);
   }
