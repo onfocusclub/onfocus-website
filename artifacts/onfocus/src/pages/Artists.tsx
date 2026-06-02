@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useListListings } from "@workspace/api-client-react";
+import { useLocation } from "wouter";
 import { ListingCard, ListingCardSkeleton } from "@/components/ListingCard";
 import { Input } from "@/components/ui/input";
 import { Search, ChevronDown } from "lucide-react";
@@ -7,6 +8,19 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = ["Singers", "DJs", "Bands", "Anchors", "Dancers", "Performers"];
+
+const CITY_SUGGESTIONS = [
+  "Mumbai",
+  "Delhi",
+  "Pune",
+  "Bangalore",
+  "Hyderabad",
+  "Chennai",
+  "Kolkata",
+  "Jaipur",
+  "Lucknow",
+  "Varanasi"
+];
 
 const LANGUAGES = ["All Languages", "Hindi", "Hinglish", "English", "Tamil", "Telugu", "Punjabi"];
 
@@ -39,8 +53,22 @@ export function Artists() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("");
   const [cityFilter, setCityFilter] = useState("");
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [language, setLanguage] = useState("All Languages");
   const [priceRange, setPriceRange] = useState("");
+  const [location] = useLocation();
+
+ useEffect(() => {
+  const queryString = location.split("?")[1] || "";
+  const params = new URLSearchParams(queryString);
+  const city = params.get("city");
+
+  if (city) {
+    setCityFilter(city);
+  }
+}, [location]);
+
+ 
 
   const { data, isLoading } = useListListings({
     type: "artist",
@@ -146,13 +174,40 @@ export function Artists() {
             <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 px-1">
               City
             </label>
-            <Input
-              placeholder="e.g. Jhansi, Mumbai"
-              className="rounded-xl border-border bg-white h-10 text-sm focus-visible:ring-foreground"
-              value={cityFilter}
-              onChange={(e) => setCityFilter(e.target.value)}
-              data-testid="input-filter-city"
-            />
+            <div className="relative">
+  <Input
+    placeholder="e.g. Mumbai, Pune"
+    className="rounded-xl border-border bg-white h-10 text-sm focus-visible:ring-foreground"
+    value={cityFilter}
+    onChange={(e) => {
+      setCityFilter(e.target.value);
+      setShowCitySuggestions(true);
+    }}
+    onFocus={() => setShowCitySuggestions(true)}
+    data-testid="input-filter-city"
+  />
+
+  {showCitySuggestions && cityFilter && (
+    <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-2 z-50 max-h-60 overflow-auto">
+      {CITY_SUGGESTIONS
+        .filter((city) =>
+          city.toLowerCase().includes(cityFilter.toLowerCase())
+        )
+        .map((city) => (
+          <div
+            key={city}
+            className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+            onClick={() => {
+              setCityFilter(city);
+              setShowCitySuggestions(false);
+            }}
+          >
+            {city}
+          </div>
+        ))}
+    </div>
+  )}
+</div>
           </div>
 
           {/* Language */}

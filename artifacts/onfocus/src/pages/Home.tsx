@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useListListings, useGetPlatformStats, useGetFeaturedListings } from "@workspace/api-client-react";
 import { motion } from "framer-motion";
 import { Search, MapPin, CheckCircle2, Shield, Star, Users } from "lucide-react";
@@ -9,7 +9,40 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ListingCard, ListingCardSkeleton } from "@/components/ListingCard";
 
 export function Home() {
+
+  const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"artist" | "vendor" | "venue">("artist");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchCity, setSearchCity] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+ 
+  const suggestions = [
+  "Singer",
+  "DJ",
+  "Band",
+  "Anchor",
+  "Dancer",
+  "Photography",
+  "Makeup",
+  "Catering",
+  "Decor",
+  "Venue"
+];
+
+const citySuggestions = [
+  "Mumbai",
+  "Delhi",
+  "Pune",
+  "Bangalore",
+  "Hyderabad",
+  "Chennai",
+  "Kolkata",
+  "Jaipur",
+  "Lucknow",
+  "Varanasi"
+];
+
   
   const { data: statsData } = useGetPlatformStats();
   const { data: featuredData } = useGetFeaturedListings();
@@ -21,6 +54,43 @@ export function Home() {
     ...featuredData.vendors.map(v => ({ id: v.id, type: 'vendor', src: v.coverImage })),
     ...featuredData.venues.map(v => ({ id: v.id, type: 'venue', src: v.coverImage })),
   ].slice(0, 9) : [];
+
+  const handleSearch = () => {
+  const query = searchQuery.toLowerCase();
+
+  if (
+  query.includes("singer") ||
+  query.includes("dj") ||
+  query.includes("band") ||
+  query.includes("anchor") ||
+  query.includes("dancer")
+) {
+  navigate(`/artists?city=${encodeURIComponent(searchCity)}`);
+  return;
+}
+
+  if (
+    query.includes("decor") ||
+    query.includes("catering") ||
+    query.includes("photography") ||
+    query.includes("makeup")
+  ) {
+    navigate("/vendors");
+    return;
+  }
+
+  if (
+    query.includes("venue") ||
+    query.includes("banquet") ||
+    query.includes("rooftop") ||
+    query.includes("lawn")
+  ) {
+    navigate("/venues");
+    return;
+  }
+
+  navigate("/explore");
+};
 
   return (
     <div className="w-full flex flex-col min-h-screen bg-background">
@@ -51,6 +121,11 @@ export function Home() {
                   <Input 
                     type="text" 
                     placeholder="What are you looking for?" 
+                    value={searchQuery}
+                    onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setShowSuggestions(true);
+                    }}
                     className="border-0 bg-transparent focus-visible:ring-0 p-0 text-base shadow-none h-auto w-full placeholder:text-muted-foreground/70"
                     data-testid="input-hero-search-query"
                   />
@@ -60,11 +135,58 @@ export function Home() {
                   <Input 
                     type="text" 
                     placeholder="City or location" 
+                    value={searchCity}
+                    onChange={(e) => {
+                      setSearchCity(e.target.value);
+                      setShowCitySuggestions(true);
+                    }}
                     className="border-0 bg-transparent focus-visible:ring-0 p-0 text-base shadow-none h-auto w-full placeholder:text-muted-foreground/70"
                     data-testid="input-hero-search-location"
                   />
+
+                  {showCitySuggestions && searchCity && (
+  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-2 z-50">
+    {citySuggestions
+      .filter((city) =>
+        city.toLowerCase().includes(searchCity.toLowerCase())
+      )
+      .map((city) => (
+        <div
+          key={city}
+          className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+          onClick={() => {
+            setSearchCity(city);
+            setShowCitySuggestions(false);
+          }}
+        >
+          {city}
+        </div>
+      ))}
+  </div>
+)}
+
+                  {showSuggestions && searchQuery && (
+  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-2 z-50">
+    {suggestions
+      .filter((item) =>
+        item.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .map((item) => (
+        <div
+          key={item}
+          className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+          onClick={() => {
+            setSearchQuery(item);
+            setShowSuggestions(false);
+          }}
+        >
+          {item}
+        </div>
+      ))}
+  </div>
+)}
                 </div>
-                <Button size="lg" className="w-full sm:w-auto rounded-full font-semibold px-8 h-12 shrink-0" data-testid="button-hero-search">
+                <Button size="lg" className="w-full sm:w-auto rounded-full font-semibold px-8 h-12 shrink-0"  onClick={handleSearch} data-testid="button-hero-search">
                   Search
                 </Button>
               </div>
