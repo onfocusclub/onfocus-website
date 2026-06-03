@@ -6,7 +6,8 @@ import { motion } from "framer-motion";
 
 export function Explore() {
   const { data, isLoading } = useListCategories();
-
+ const searchParams = new URLSearchParams(window.location.search);
+const requestedQuery = searchParams.get("query")?.trim();
   return (
     <div className="min-h-screen bg-background pt-32 pb-32">
       <div className="container mx-auto px-6 md:px-8 max-w-5xl">
@@ -16,6 +17,17 @@ export function Explore() {
             Browse our comprehensive directory of creative professionals and venues.
           </p>
         </div>
+
+        {requestedQuery && (
+          <div className="mb-12 rounded-xl border border-border bg-white px-6 py-5 text-center shadow-sm" data-testid="explore-no-match-message">
+            <h2 className="text-2xl font-semibold text-foreground mb-2">
+              We don't have "{requestedQuery}" yet.
+            </h2>
+            <p className="text-muted-foreground">
+              Try these popular categories instead.
+            </p>
+          </div>
+        )}
 
         <Tabs defaultValue="artists" className="w-full flex flex-col items-center">
           <TabsList className="h-auto p-1.5 bg-muted rounded-full mb-16 inline-flex" data-testid="tabs-explore-directory">

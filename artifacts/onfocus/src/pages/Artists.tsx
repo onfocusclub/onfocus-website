@@ -7,7 +7,7 @@ import { Search, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-const CATEGORIES = ["Singers", "DJs", "Bands", "Anchors", "Dancers", "Performers"];
+const CATEGORIES = ["Singer", "DJ", "Band", "Anchor", "Dancer", "Performer"];
 
 const CITY_SUGGESTIONS = [
   "Mumbai",
@@ -19,7 +19,22 @@ const CITY_SUGGESTIONS = [
   "Kolkata",
   "Jaipur",
   "Lucknow",
-  "Varanasi"
+  "Varanasi",
+  "Gurugram",
+  "Gurgaon",
+  "Ghaziabad",
+  "Goa",
+  "Guwahati",
+  "Gwalior",
+  "Greater Noida",
+  "Noida",
+  "Ahmedabad",
+  "Indore",
+  "Bhopal",
+  "Surat",
+  "Udaipur",
+  "Chandigarh",
+  "Dehradun",
 ];
 
 const LANGUAGES = ["All Languages", "Hindi", "Hinglish", "English", "Tamil", "Telugu", "Punjabi"];
@@ -49,6 +64,29 @@ function matchesPriceRange(priceRange: string | null | undefined, bucket: string
   return true;
 }
 
+
+function extractFirstPrice(priceRange: string | null | undefined): number | null {
+  if (!priceRange) return null;
+
+  const match = priceRange.match(/[\d,]+/);
+  if (!match) return null;
+
+  return parseInt(match[0].replace(/,/g, ""), 10);
+}
+
+function matchesCustomBudget(priceRange: string | null | undefined, budget: string): boolean {
+  const normalizedBudget = budget.replace(/[^\d]/g, "");
+  if (!normalizedBudget) return true;
+
+  const maxBudget = parseInt(normalizedBudget, 10);
+  if (Number.isNaN(maxBudget)) return true;
+
+  const listingPrice = extractFirstPrice(priceRange);
+  if (listingPrice === null) return true;
+
+  return listingPrice <= maxBudget;
+}
+
 export function Artists() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("");
@@ -56,18 +94,29 @@ export function Artists() {
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [language, setLanguage] = useState("All Languages");
   const [priceRange, setPriceRange] = useState("");
+  const [customBudget, setCustomBudget] = useState("");
   const [location] = useLocation();
 
  useEffect(() => {
   const queryString = location.split("?")[1] || "";
   const params = new URLSearchParams(queryString);
   const city = params.get("city");
+  const urlCategory = params.get("category");
 
   if (city) {
     setCityFilter(city);
   }
+
+  if (urlCategory) {
+    setCategory(urlCategory);
+  }
 }, [location]);
 
+const cityMatches = cityFilter.trim()
+  ? CITY_SUGGESTIONS.filter((city) =>
+      city.toLowerCase().includes(cityFilter.trim().toLowerCase())
+    )
+  : [];
  
 
   const { data, isLoading } = useListListings({
@@ -90,11 +139,19 @@ export function Artists() {
       if (priceRange) {
         if (!matchesPriceRange(l.priceRange, priceRange)) return false;
       }
+      if (customBudget.trim()) {
+        if (!matchesCustomBudget(l.priceRange, customBudget)) return false;
+      }
       return true;
     });
-  }, [data, cityFilter, language, priceRange]);
-
-  const hasActiveFilters = cityFilter || (language && language !== "All Languages") || priceRange;
+ }, [data, cityFilter, language, priceRange, customBudget]);
+ const hasActiveFilters =
+  search ||
+  category ||
+  cityFilter ||
+  (language && language !== "All Languages") ||
+  priceRange ||
+  customBudget;
 
   function clearAll() {
     setSearch("");
@@ -102,6 +159,7 @@ export function Artists() {
     setCityFilter("");
     setLanguage("All Languages");
     setPriceRange("");
+    setCustomBudget("");
   }
 
   return (
@@ -188,25 +246,33 @@ export function Artists() {
   />
 
   {showCitySuggestions && cityFilter && (
-    <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-2 z-50 max-h-60 overflow-auto">
-      {CITY_SUGGESTIONS
-        .filter((city) =>
-          city.toLowerCase().includes(cityFilter.toLowerCase())
-        )
-        .map((city) => (
-          <div
-            key={city}
-            className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
-            onClick={() => {
-              setCityFilter(city);
-              setShowCitySuggestions(false);
-            }}
-          >
-            {city}
-          </div>
-        ))}
-    </div>
-  )}
+  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-2 z-50 max-h-60 overflow-auto">
+    {cityMatches.map((city) => (
+      <div
+        key={city}
+        className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+        onClick={() => {
+          setCityFilter(city);
+          setShowCitySuggestions(false);
+        }}
+      >
+        {city}
+      </div>
+    ))}
+
+    {cityMatches.length === 0 && (
+      <div
+        className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+        onClick={() => {
+          setCityFilter(cityFilter.trim());
+          setShowCitySuggestions(false);
+        }}
+      >
+        Use "{cityFilter.trim()}"
+      </div>
+    )}
+  </div>
+)}
 </div>
           </div>
 
@@ -252,6 +318,14 @@ export function Artists() {
               </select>
               <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </div>
+            <Input
+              inputMode="numeric"
+              placeholder="Custom max budget"
+              className="mt-2 rounded-xl border-border bg-white h-10 text-sm focus-visible:ring-foreground"
+              value={customBudget}
+              onChange={(e) => setCustomBudget(e.target.value)}
+              data-testid="input-filter-custom-budget"
+            />
           </div>
 
           {/* Clear filters */}
@@ -294,9 +368,12 @@ export function Artists() {
             ))
           ) : (
             <div className="col-span-full py-32 text-center">
-              <p className="text-muted-foreground text-lg" data-testid="text-no-results">
-                No artists found matching your criteria.
-              </p>
+              <p className="text-foreground text-xl font-semibold" data-testid="text-no-results">
+  No exact matches found.
+</p>
+<p className="mt-2 text-muted-foreground">
+  Try clearing filters or browsing popular artist categories.
+</p>
               <button
                 className="mt-4 text-foreground font-medium underline underline-offset-4"
                 onClick={clearAll}

@@ -17,18 +17,20 @@ export function Home() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
  
-  const suggestions = [
-  "Singer",
-  "DJ",
-  "Band",
-  "Anchor",
-  "Dancer",
-  "Photography",
-  "Makeup",
-  "Catering",
-  "Decor",
-  "Venue"
-];
+ const searchOptions = [
+  { label: "Singer", type: "artist", aliases: ["singer", "vocalist", "bollywood singer"] },
+  { label: "DJ", type: "artist", aliases: ["dj", "disc jockey"] },
+  { label: "Band", type: "artist", aliases: ["band", "live band", "musician"] },
+  { label: "Anchor", type: "artist", aliases: ["anchor", "host", "emcee"] },
+  { label: "Dancer", type: "artist", aliases: ["dancer", "dance", "classical dancer"] },
+  { label: "Photographer", type: "vendor", aliases: ["photography", "photographer", "photo"] },
+  { label: "Makeup Artist", type: "vendor", aliases: ["makeup", "makeup artist", "mua"] },
+  { label: "Catering", type: "vendor", aliases: ["catering", "caterer", "food"] },
+  { label: "Lighting & Decor", type: "vendor", aliases: ["decor", "decoration", "lighting"] },
+  { label: "Banquet Hall", type: "venue", aliases: ["venue", "banquet", "hall"] },
+  { label: "Rooftop Venue", type: "venue", aliases: ["rooftop", "terrace"] },
+  { label: "Garden / Lawn", type: "venue", aliases: ["lawn", "garden"] },
+] as const;
 
 const citySuggestions = [
   "Mumbai",
@@ -40,10 +42,37 @@ const citySuggestions = [
   "Kolkata",
   "Jaipur",
   "Lucknow",
-  "Varanasi"
+  "Varanasi",
+  "Gurugram",
+  "Gurgaon",
+  "Ghaziabad",
+  "Goa",
+  "Guwahati",
+  "Gwalior",
+  "Greater Noida",
+  "Noida",
+  "Ahmedabad",
+  "Indore",
+  "Bhopal",
+  "Surat",
+  "Udaipur",
+  "Chandigarh",
+  "Dehradun",
 ];
 
-  
+  const searchSuggestions = searchOptions.filter((item) => {
+  const query = searchQuery.trim().toLowerCase();
+  return query && [item.label, ...item.aliases].some((value) =>
+    value.toLowerCase().includes(query)
+  );
+});
+
+const cityMatches = searchCity.trim()
+  ? citySuggestions.filter((city) =>
+      city.toLowerCase().includes(searchCity.trim().toLowerCase())
+    )
+  : [];
+
   const { data: statsData } = useGetPlatformStats();
   const { data: featuredData } = useGetFeaturedListings();
   const { data: tabData, isLoading: isTabLoading } = useListListings({ type: activeTab, limit: 6 });
@@ -56,40 +85,32 @@ const citySuggestions = [
   ].slice(0, 9) : [];
 
   const handleSearch = () => {
-  const query = searchQuery.toLowerCase();
+  const query = searchQuery.trim().toLowerCase();
+  const city = searchCity.trim();
 
-  if (
-  query.includes("singer") ||
-  query.includes("dj") ||
-  query.includes("band") ||
-  query.includes("anchor") ||
-  query.includes("dancer")
-) {
-  navigate(`/artists?city=${encodeURIComponent(searchCity)}`);
-  return;
-}
-
-  if (
-    query.includes("decor") ||
-    query.includes("catering") ||
-    query.includes("photography") ||
-    query.includes("makeup")
-  ) {
-    navigate("/vendors");
+  if (!query && !city) {
+    navigate("/explore");
     return;
   }
 
-  if (
-    query.includes("venue") ||
-    query.includes("banquet") ||
-    query.includes("rooftop") ||
-    query.includes("lawn")
-  ) {
-    navigate("/venues");
+  const match = searchOptions.find((item) =>
+    [item.label, ...item.aliases].some((value) => {
+      const normalized = value.toLowerCase();
+      return normalized === query;
+    })
+  );
+
+  const params = new URLSearchParams();
+  if (city) params.set("city", city);
+
+  if (match) {
+    params.set("category", match.label);
+    navigate(`/${match.type}s?${params.toString()}`);
     return;
   }
 
-  navigate("/explore");
+  params.set("query", searchQuery.trim());
+  navigate(`/explore?${params.toString()}`);
 };
 
   return (
@@ -129,6 +150,8 @@ const citySuggestions = [
                     className="border-0 bg-transparent focus-visible:ring-0 p-0 text-base shadow-none h-auto w-full placeholder:text-muted-foreground/70"
                     data-testid="input-hero-search-query"
                   />
+                 
+  
                 </div>
                 <div className="hidden sm:block w-px h-8 bg-border"></div>
                 <div className="flex-1 w-full relative flex items-center px-5 py-3 border-t sm:border-t-0">
@@ -144,47 +167,36 @@ const citySuggestions = [
                     data-testid="input-hero-search-location"
                   />
 
-                  {showCitySuggestions && searchCity && (
-  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-2 z-50">
-    {citySuggestions
-      .filter((city) =>
-        city.toLowerCase().includes(searchCity.toLowerCase())
-      )
-      .map((city) => (
-        <div
-          key={city}
-          className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-          onClick={() => {
-            setSearchCity(city);
-            setShowCitySuggestions(false);
-          }}
-        >
-          {city}
-        </div>
-      ))}
+                 {showCitySuggestions && searchCity && (
+  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-2 z-50 overflow-hidden">
+    {cityMatches.map((city) => (
+      <div
+        key={city}
+        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+        onClick={() => {
+          setSearchCity(city);
+          setShowCitySuggestions(false);
+        }}
+      >
+        {city}
+      </div>
+    ))}
+
+    {cityMatches.length === 0 && (
+      <div
+        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+        onClick={() => {
+          setSearchCity(searchCity.trim());
+          setShowCitySuggestions(false);
+        }}
+      >
+        Use "{searchCity.trim()}"
+      </div>
+    )}
   </div>
 )}
 
-                  {showSuggestions && searchQuery && (
-  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-2 z-50">
-    {suggestions
-      .filter((item) =>
-        item.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      .map((item) => (
-        <div
-          key={item}
-          className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-          onClick={() => {
-            setSearchQuery(item);
-            setShowSuggestions(false);
-          }}
-        >
-          {item}
-        </div>
-      ))}
-  </div>
-)}
+                 
                 </div>
                 <Button size="lg" className="w-full sm:w-auto rounded-full font-semibold px-8 h-12 shrink-0"  onClick={handleSearch} data-testid="button-hero-search">
                   Search

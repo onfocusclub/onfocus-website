@@ -1,22 +1,154 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useListListings } from "@workspace/api-client-react";
 import { ListingCard, ListingCardSkeleton } from "@/components/ListingCard";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 
-const CATEGORIES = ["Banquet Halls", "Rooftops", "Luxury Venues", "Open Lawns", "Clubs"];
+const CATEGORIES = ["Banquet Hall", "Rooftop Venue", "Garden / Lawn", "Luxury Venue", "Club"];
+
+const CITY_SUGGESTIONS = [
+  "Mumbai",
+  "Delhi",
+  "Pune",
+  "Bangalore",
+  "Hyderabad",
+  "Chennai",
+  "Kolkata",
+  "Jaipur",
+  "Lucknow",
+  "Varanasi",
+  "Gurugram",
+  "Gurgaon",
+  "Ghaziabad",
+  "Goa",
+  "Guwahati",
+  "Gwalior",
+  "Greater Noida",
+  "Noida",
+  "Ahmedabad",
+  "Indore",
+  "Bhopal",
+  "Surat",
+  "Udaipur",
+  "Chandigarh",
+  "Dehradun",
+];
+
+const PRICE_RANGES = [
+  { label: "Any Price", value: "" },
+  { label: "Under ₹25,000", value: "under-25k" },
+  { label: "₹25,000 - ₹75,000", value: "25k-75k" },
+  { label: "₹75,000 - ₹2,00,000", value: "75k-200k" },
+  { label: "₹2,00,000+", value: "above-200k" },
+];
+
+function extractFirstPrice(priceRange: string | null | undefined): number | null {
+  if (!priceRange) return null;
+
+  const match = priceRange.match(/[\d,]+/);
+  if (!match) return null;
+
+  return parseInt(match[0].replace(/,/g, ""), 10);
+}
+
+function matchesPriceRange(priceRange: string | null | undefined, bucket: string): boolean {
+  if (!bucket) return true;
+
+  const price = extractFirstPrice(priceRange);
+  if (price === null) return true;
+
+  if (bucket === "under-25k") return price < 25000;
+  if (bucket === "25k-75k") return price >= 25000 && price <= 75000;
+  if (bucket === "75k-200k") return price > 75000 && price <= 200000;
+  if (bucket === "above-200k") return price > 200000;
+
+  return true;
+}
+
+function matchesCustomBudget(priceRange: string | null | undefined, budget: string): boolean {
+  const normalizedBudget = budget.replace(/[^\d]/g, "");
+  if (!normalizedBudget) return true;
+
+  const maxBudget = parseInt(normalizedBudget, 10);
+  if (Number.isNaN(maxBudget)) return true;
+
+  const listingPrice = extractFirstPrice(priceRange);
+  if (listingPrice === null) return true;
+
+  return listingPrice <= maxBudget;
+}
+
 
 export function Venues() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("");
+  const [cityFilter, setCityFilter] = useState("");
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const [priceRange, setPriceRange] = useState("");
+  const [customBudget, setCustomBudget] = useState("");
+  const [location] = useLocation();
   
-  const { data, isLoading } = useListListings({ 
-    type: "venue",
-    search: search || undefined,
-    category: category || undefined
+  const { data, isLoading } = useListListings({
+  type: "venue",
+  search: search || undefined,
+  category: category || undefined,
+  limit: 100,
+});
+
+const filtered = useMemo(() => {
+  if (!data?.listings) return [];
+
+  return data.listings.filter((listing) => {
+    if (cityFilter.trim()) {
+      if (!listing.city.toLowerCase().includes(cityFilter.trim().toLowerCase())) {
+        return false;
+      }
+    }
+
+    if (priceRange) {
+      if (!matchesPriceRange(listing.priceRange, priceRange)) return false;
+    }
+
+    if (customBudget.trim()) {
+      if (!matchesCustomBudget(listing.priceRange, customBudget)) return false;
+    }
+
+    return true;
   });
+}, [data, cityFilter, priceRange, customBudget]);
+
+const hasActiveFilters = search || category || cityFilter || priceRange || customBudget;
+
+function clearAll() {
+  setSearch("");
+  setCategory("");
+  setCityFilter("");
+  setPriceRange("");
+  setCustomBudget("");
+}
+
+  useEffect(() => {
+  const searchParams = new URLSearchParams(window.location.search);
+  const city = searchParams.get("city");
+  const urlCategory = searchParams.get("category");
+
+  if (city) {
+    setCityFilter(city);
+  }
+
+  if (urlCategory) {
+    setCategory(urlCategory);
+  }
+}, [location]);
+
+const cityMatches = cityFilter.trim()
+  ? CITY_SUGGESTIONS.filter((city) =>
+      city.toLowerCase().includes(cityFilter.trim().toLowerCase())
+    )
+  : [];
 
   return (
     <div className="min-h-screen bg-background pt-32 pb-24">
@@ -28,7 +160,7 @@ export function Venues() {
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-8 mb-12 items-start md:items-center justify-between">
+        <div className="flex flex-col md:flex-row gap-8 mb-8 items-start md:items-center justify-between">
           <div className="flex overflow-x-auto pb-2 w-full md:w-auto scrollbar-hide gap-2">
             <button 
               onClick={() => setCategory("")}
@@ -59,6 +191,98 @@ export function Venues() {
             ))}
           </div>
 
+                  <div className="flex flex-col sm:flex-row gap-3 mb-10 p-4 rounded-2xl bg-muted/40 border border-border/60">
+          <div className="relative flex-1 min-w-0">
+            <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 px-1">
+              City
+            </label>
+            <div className="relative">
+              <Input
+                placeholder="e.g. Mumbai, Pune"
+                className="rounded-xl border-border bg-white h-10 text-sm focus-visible:ring-foreground"
+                value={cityFilter}
+                onChange={(e) => {
+                  setCityFilter(e.target.value);
+                  setShowCitySuggestions(true);
+                }}
+                onFocus={() => setShowCitySuggestions(true)}
+                data-testid="input-filter-city"
+              />
+
+              {showCitySuggestions && cityFilter && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-2 z-50 max-h-60 overflow-auto">
+                  {cityMatches.map((city) => (
+                    <div
+                      key={city}
+                      className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+                      onClick={() => {
+                        setCityFilter(city);
+                        setShowCitySuggestions(false);
+                      }}
+                    >
+                      {city}
+                    </div>
+                  ))}
+
+                  {cityMatches.length === 0 && (
+                    <div
+                      className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+                      onClick={() => {
+                        setCityFilter(cityFilter.trim());
+                        setShowCitySuggestions(false);
+                      }}
+                    >
+                      Use "{cityFilter.trim()}"
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="relative flex-1 min-w-0">
+            <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 px-1">
+              Price Range
+            </label>
+            <div className="relative">
+              <select
+                className="w-full h-10 pl-3 pr-8 rounded-xl border border-border bg-white text-sm text-foreground appearance-none focus:outline-none focus:ring-1 focus:ring-foreground cursor-pointer"
+                value={priceRange}
+                onChange={(e) => setPriceRange(e.target.value)}
+                data-testid="select-filter-price"
+              >
+                {PRICE_RANGES.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            </div>
+
+            <Input
+              inputMode="numeric"
+              placeholder="Custom max budget"
+              className="mt-2 rounded-xl border-border bg-white h-10 text-sm focus-visible:ring-foreground"
+              value={customBudget}
+              onChange={(e) => setCustomBudget(e.target.value)}
+              data-testid="input-filter-custom-budget"
+            />
+          </div>
+
+          {hasActiveFilters && (
+            <div className="flex items-end shrink-0">
+              <button
+                onClick={clearAll}
+                className="h-10 px-4 text-sm font-medium text-muted-foreground hover:text-foreground border border-border rounded-xl bg-white transition-colors whitespace-nowrap"
+                data-testid="button-clear-filters"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
+
           <div className="relative w-full md:w-80 shrink-0">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
@@ -74,8 +298,8 @@ export function Venues() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {isLoading ? (
             Array(6).fill(0).map((_, i) => <ListingCardSkeleton key={i} />)
-          ) : data?.listings.length ? (
-            data.listings.map((listing, i) => (
+          ) : filtered.length ? (
+  filtered.map((listing, i) => (
               <motion.div
                 key={listing.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -87,10 +311,15 @@ export function Venues() {
             ))
           ) : (
             <div className="col-span-full py-32 text-center">
-              <p className="text-muted-foreground text-lg" data-testid="text-no-results">No venues found matching your criteria.</p>
+              <p className="text-foreground text-xl font-semibold" data-testid="text-no-results">
+  No exact matches found.
+</p>
+<p className="mt-2 text-muted-foreground">
+  Try clearing filters or browsing popular venue categories.
+</p>
               <button 
                 className="mt-4 text-foreground font-medium underline underline-offset-4" 
-                onClick={() => { setSearch(""); setCategory(""); }}
+                onClick={clearAll}
                 data-testid="button-clear-filters"
               >
                 Clear all filters
