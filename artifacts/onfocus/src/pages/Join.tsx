@@ -28,9 +28,9 @@ type MediaSlot = {
 };
 
 const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-const VIDEO_MAX_BYTES = 25 * 1024 * 1024;
+const VIDEO_MAX_BYTES = 10 * 1024 * 1024;
 const MAX_GALLERY_IMAGES = 5;
-const MAX_VIDEOS = 2;
+const MAX_VIDEOS = 1;
 
 const TYPE_CONFIG = {
   artist: {
@@ -81,7 +81,6 @@ export function Join() {
   const [profileImage, setProfileImage] = useState<MediaSlot | null>(null);
   const [galleryImages, setGalleryImages] = useState<MediaSlot[]>([]);
   const [videos, setVideos] = useState<MediaSlot[]>([]);
-  const [videoLinks, setVideoLinks] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   
   const [form, setForm] = useState({
@@ -96,14 +95,12 @@ export function Join() {
 
  const tags = splitLines(form.tags);
 const amenities = splitLines(form.amenities);
-const parsedVideoLinks = splitLines(videoLinks);
 const uploadedGalleryUrls = galleryImages
   .map((item) => item.uploaded?.url)
   .filter(Boolean) as string[];
-const uploadedVideoUrls = [
-  ...videos.map((item) => item.uploaded?.url).filter(Boolean),
-  ...parsedVideoLinks,
-] as string[];
+const uploadedVideoUrls = videos
+  .map((item) => item.uploaded?.url)
+  .filter(Boolean) as string[];
 const uploadedMediaCount =
   Number(Boolean(coverImage?.uploaded)) +
   Number(Boolean(profileImage?.uploaded)) +
@@ -120,8 +117,8 @@ async function prepareImage(file: File) {
   }
 
   return imageCompression(file, {
-    maxSizeMB: 1.5,
-    maxWidthOrHeight: 1600,
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1400,
     useWebWorker: true,
   });
 }
@@ -196,7 +193,7 @@ async function handleVideoPick(event: ChangeEvent<HTMLInputElement>) {
 
   const oversized = selected.find((file) => file.size > VIDEO_MAX_BYTES);
   if (oversized) {
-    alert("Each video must be 25 MB or smaller.");
+   alert("Each video must be 10 MB or smaller.");
     return;
   }
 
@@ -269,7 +266,7 @@ function removeVideo(index: number) {
     profileImage: profileImage?.uploaded ?? null,
     galleryImages: galleryImages.map((item) => item.uploaded).filter(Boolean),
     videos: videos.map((item) => item.uploaded).filter(Boolean),
-    videoLinks: parsedVideoLinks,
+   
 },
 portfolioUrls: uploadedGalleryUrls,
     website: form.website || null,
@@ -654,15 +651,6 @@ portfolioUrls: uploadedGalleryUrls,
           </div>
         )}
 
-        <div className="mt-4">
-          <label className="text-sm font-medium mb-2 block">Video Links</label>
-          <Textarea
-            placeholder={"Paste YouTube / Instagram / Drive links, one per line"}
-            value={videoLinks}
-            onChange={(event) => setVideoLinks(event.target.value)}
-            className="min-h-[100px] resize-none"
-          />
-        </div>
       </div>
 
       {isUploading && (

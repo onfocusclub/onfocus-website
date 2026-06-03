@@ -5,8 +5,8 @@ import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
 const router = Router();
 
 const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-const VIDEO_MAX_BYTES = 25 * 1024 * 1024;
-const MAX_FILES = 9;
+const VIDEO_MAX_BYTES = 10 * 1024 * 1024;
+const MAX_FILES = 8;
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const allowedVideoTypes = new Set(["video/mp4", "video/quicktime", "video/webm"]);
@@ -112,8 +112,8 @@ router.post(
         return;
       }
 
-      if (videoFiles.length > 2) {
-        res.status(400).json({ error: "Maximum 2 videos are allowed" });
+      if (videoFiles.length > 1) {
+        res.status(400).json({ error: "Maximum 1 video is allowed" });
         return;
       }
 
@@ -125,7 +125,7 @@ router.post(
 
       const oversizedVideo = videoFiles.find((file) => file.size > VIDEO_MAX_BYTES);
       if (oversizedVideo) {
-        res.status(400).json({ error: "Each video must be 25 MB or smaller" });
+        res.status(400).json({ error: "Each video must be 10 MB or smaller" });
         return;
       }
 
