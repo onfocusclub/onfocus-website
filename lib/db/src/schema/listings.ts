@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, real, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, real, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -12,7 +12,10 @@ export const listingsTable = pgTable("listings", {
   reviewCount: integer("review_count").notNull().default(0),
   bio: text("bio").notNull(),
   coverImage: text("cover_image").notNull().default(""),
+  profileImage: text("profile_image"),
   images: text("images").array().notNull().default([]),
+  videoUrls: text("video_urls").array().notNull().default([]),
+  mediaMetadata: jsonb("media_metadata").$type<Record<string, unknown>>().notNull().default({}),
   tags: text("tags").array().notNull().default([]),
   verified: boolean("verified").notNull().default(false),
   featured: boolean("featured").notNull().default(false),

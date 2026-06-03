@@ -6,9 +6,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface PlatformStats {
-  totalProfessionals: number;
-  eventsSupported: number;
-  citiesCovered: number;
-  verifiedProfiles: number;
-}
+export type ListingMediaMetadata = { [key: string]: unknown };

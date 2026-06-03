@@ -21,23 +21,28 @@ function firstImage(urls: string[]) {
 
 // POST /api/partner-applications
 router.post("/", async (req: Request, res: Response): Promise<void> => {
-  const {
-    partnerType,
-    businessName,
-    email,
-    phone,
-    city,
-    category,
-    description,
-    priceRange,
-    portfolioUrls,
-    website,
-    yearsActive,
-    eventsCompleted,
-    capacity,
-    tags,
-    amenities,
-  } = req.body;
+ const {
+  partnerType,
+  businessName,
+  email,
+  phone,
+  city,
+  category,
+  description,
+  priceRange,
+  portfolioUrls,
+  website,
+  yearsActive,
+  eventsCompleted,
+  capacity,
+  tags,
+  amenities,
+  coverImage,
+  profileImage,
+  galleryUrls,
+  videoUrls,
+  mediaMetadata,
+} = req.body;
 
   if (!partnerType || !businessName || !email || !city || !category || !description) {
    res.status(400).json({ error: "Missing required fields" });
@@ -50,9 +55,10 @@ return;
         (
           name, email, phone, type, category, city, description, website,
           price_range, portfolio_urls, years_active, events_completed,
-          capacity, tags, amenities, status, submitted_at
+capacity, tags, amenities, cover_image, profile_image,
+gallery_urls, video_urls, media_metadata, status, submitted_at
         )
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'pending',NOW())
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,'pending',NOW())
        RETURNING *`,
       [
         businessName,
@@ -70,6 +76,11 @@ return;
         toNullableNumber(capacity),
         toStringArray(tags),
         toStringArray(amenities),
+        coverImage ?? null,
+profileImage ?? null,
+toStringArray(galleryUrls),
+toStringArray(videoUrls),
+mediaMetadata ?? {},
       ]
     );
 
@@ -160,17 +171,20 @@ return;
     const application = updateResult.rows[0];
 
     if (status === "approved") {
-      const mediaUrls = toStringArray(application.portfolio_urls);
-      const coverImage = firstImage(mediaUrls);
+     const galleryUrls = toStringArray(application.gallery_urls);
+const fallbackMediaUrls = toStringArray(application.portfolio_urls);
+const listingImages = galleryUrls.length > 0 ? galleryUrls : fallbackMediaUrls;
+const coverImage = application.cover_image ?? firstImage(listingImages);
 
       await client.query(
         `INSERT INTO listings
           (
             type, name, category, city, rating, review_count, bio,
-            cover_image, images, tags, verified, featured,
-            years_active, events_completed, price_range, capacity, amenities
+           cover_image, profile_image, images, video_urls, media_metadata,
+tags, verified, featured, years_active, events_completed,
+price_range, capacity, amenities
           )
-         VALUES ($1,$2,$3,$4,4.5,0,$5,$6,$7,$8,true,false,$9,$10,$11,$12,$13)
+VALUES ($1,$2,$3,$4,4.5,0,$5,$6,$7,$8,$9,$10,true,false,$11,$12,$13,$14,$15)
          ON CONFLICT DO NOTHING`,
         [
           application.type,
@@ -178,14 +192,17 @@ return;
           application.category,
           application.city,
           application.description,
-          coverImage,
-          mediaUrls,
-          toStringArray(application.tags),
-          application.years_active,
-          application.events_completed,
-          application.price_range,
-          application.capacity,
-          toStringArray(application.amenities),
+coverImage,
+application.profile_image ?? null,
+listingImages,
+toStringArray(application.video_urls),
+application.media_metadata ?? {},
+toStringArray(application.tags),
+application.years_active,
+application.events_completed,
+application.price_range,
+application.capacity,
+toStringArray(application.amenities),
         ]
       );
     }

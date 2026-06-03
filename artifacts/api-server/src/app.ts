@@ -4,6 +4,7 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import partnerApplicationsRouter from "./routes/partnerApplications";
 import { logger } from "./lib/logger";
+import uploadsRouter from "./routes/uploads";
 
 const app: Express = express();
 
@@ -30,6 +31,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/partner-applications", partnerApplicationsRouter);  
+app.use("/api/partner-applications", partnerApplicationsRouter);
+app.use("/api/uploads", uploadsRouter);  
 app.use("/api", router);
 export default app;
