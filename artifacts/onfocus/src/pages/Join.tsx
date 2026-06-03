@@ -1,13 +1,36 @@
-import { useState } from "react";
-import { Music, Camera, Building2, ChevronRight, Link2, Check, ArrowLeft } from "lucide-react";
+import { useState, type ChangeEvent } from "react";
+import { Music, Camera, Building2, ChevronRight, Check, ArrowLeft, Upload, X, Image as ImageIcon, Video } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Link } from "wouter";
 import { sendPartnerNotification } from "@/lib/emailjs";
+import imageCompression from "browser-image-compression";
 
 type ListingType = "artist" | "vendor" | "venue";
+
+type UploadedMedia = {
+  url: string;
+  publicId: string;
+  resourceType: "image" | "video";
+  format: string;
+  bytes: number;
+  width?: number;
+  height?: number;
+  duration?: number;
+};
+
+type MediaSlot = {
+  file: File;
+  previewUrl: string;
+  uploaded?: UploadedMedia;
+};
+
+const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const VIDEO_MAX_BYTES = 25 * 1024 * 1024;
+const MAX_GALLERY_IMAGES = 5;
+const MAX_VIDEOS = 2;
 
 const TYPE_CONFIG = {
   artist: {
@@ -54,24 +77,169 @@ export function Join() {
   const [type, setType] = useState<ListingType | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [coverImage, setCoverImage] = useState<MediaSlot | null>(null);
+  const [profileImage, setProfileImage] = useState<MediaSlot | null>(null);
+  const [galleryImages, setGalleryImages] = useState<MediaSlot[]>([]);
+  const [videos, setVideos] = useState<MediaSlot[]>([]);
+  const [videoLinks, setVideoLinks] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   
   const [form, setForm] = useState({
     name: "", email: "", phone: "", city: "", category: "",
    bio: "", priceRange: "", yearsActive: "", eventsCompleted: "", capacity: "", website: "",
-tags: "", amenities: "", galleryUrls: "", portfolioUrls: "",
+   tags: "", amenities: "",
   });
 
   function updateForm(key: string, value: string) {
     setForm(prev => ({ ...prev, [key]: value }));
   }
 
-  const galleryUrls = splitLines(form.galleryUrls);
-const portfolioUrls = splitLines(form.portfolioUrls);
-const allMediaUrls = Array.from(new Set([...galleryUrls, ...portfolioUrls]));
-const tags = splitLines(form.tags);
+ const tags = splitLines(form.tags);
 const amenities = splitLines(form.amenities);
+const parsedVideoLinks = splitLines(videoLinks);
+const uploadedGalleryUrls = galleryImages
+  .map((item) => item.uploaded?.url)
+  .filter(Boolean) as string[];
+const uploadedVideoUrls = [
+  ...videos.map((item) => item.uploaded?.url).filter(Boolean),
+  ...parsedVideoLinks,
+] as string[];
+const uploadedMediaCount =
+  Number(Boolean(coverImage?.uploaded)) +
+  Number(Boolean(profileImage?.uploaded)) +
+  uploadedGalleryUrls.length +
+  uploadedVideoUrls.length;
+
+  function revokeSlot(slot: MediaSlot | null) {
+  if (slot) URL.revokeObjectURL(slot.previewUrl);
+}
+
+async function prepareImage(file: File) {
+  if (file.size > IMAGE_MAX_BYTES) {
+    throw new Error("Each image must be 5 MB or smaller before compression.");
+  }
+
+  return imageCompression(file, {
+    maxSizeMB: 1.5,
+    maxWidthOrHeight: 1600,
+    useWebWorker: true,
+  });
+}
+
+async function uploadFiles(files: File[]) {
+  const body = new FormData();
+  files.forEach((file) => body.append("files", file));
+
+  const res = await fetch(`${API_BASE}/api/uploads/media`, {
+    method: "POST",
+    body,
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to upload media");
+  }
+
+  return data.media as UploadedMedia[];
+}
+
+async function handleImagePick(
+  event: ChangeEvent<HTMLInputElement>,
+  target: "cover" | "profile" | "gallery",
+) {
+  const files = Array.from(event.target.files ?? []);
+  event.target.value = "";
+
+  if (files.length === 0) return;
+
+  try {
+    setIsUploading(true);
+
+    const limitedFiles =
+      target === "gallery"
+        ? files.slice(0, Math.max(0, MAX_GALLERY_IMAGES - galleryImages.length))
+        : [files[0]];
+
+    const compressedFiles = await Promise.all(limitedFiles.map(prepareImage));
+    const uploaded = await uploadFiles(compressedFiles);
+
+    const slots = compressedFiles.map((file, index) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+      uploaded: uploaded[index],
+    }));
+
+    if (target === "cover") {
+      revokeSlot(coverImage);
+      setCoverImage(slots[0]);
+    } else if (target === "profile") {
+      revokeSlot(profileImage);
+      setProfileImage(slots[0]);
+    } else {
+      setGalleryImages((prev) => [...prev, ...slots].slice(0, MAX_GALLERY_IMAGES));
+    }
+  } catch (err) {
+    alert(err instanceof Error ? err.message : "Image upload failed");
+  } finally {
+    setIsUploading(false);
+  }
+}
+
+async function handleVideoPick(event: ChangeEvent<HTMLInputElement>) {
+  const files = Array.from(event.target.files ?? []);
+  event.target.value = "";
+
+  if (files.length === 0) return;
+
+  const remaining = MAX_VIDEOS - videos.length;
+  const selected = files.slice(0, remaining);
+
+  const oversized = selected.find((file) => file.size > VIDEO_MAX_BYTES);
+  if (oversized) {
+    alert("Each video must be 25 MB or smaller.");
+    return;
+  }
+
+  try {
+    setIsUploading(true);
+    const uploaded = await uploadFiles(selected);
+    const slots = selected.map((file, index) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+      uploaded: uploaded[index],
+    }));
+
+    setVideos((prev) => [...prev, ...slots].slice(0, MAX_VIDEOS));
+  } catch (err) {
+    alert(err instanceof Error ? err.message : "Video upload failed");
+  } finally {
+    setIsUploading(false);
+  }
+}
+
+function removeGalleryImage(index: number) {
+  setGalleryImages((prev) => {
+    const next = [...prev];
+    const [removed] = next.splice(index, 1);
+    revokeSlot(removed ?? null);
+    return next;
+  });
+}
+
+function removeVideo(index: number) {
+  setVideos((prev) => {
+    const next = [...prev];
+    const [removed] = next.splice(index, 1);
+    revokeSlot(removed ?? null);
+    return next;
+  });
+}
   async function handleSubmit() {
-  setIsSubmitting(true);
+  if (!coverImage?.uploaded || !profileImage?.uploaded) {
+  alert("Please upload a cover image and profile image before submitting.");
+  return;
+}
+ setIsSubmitting(true);
   try {
     // 1. Save to your Neon DB via backend
     const apiRes = await fetch(`${API_BASE}/api/partner-applications`, {
@@ -92,7 +260,18 @@ const amenities = splitLines(form.amenities);
     capacity: form.capacity ? Number(form.capacity) : null,
     tags,
     amenities,
-    portfolioUrls: allMediaUrls,
+  coverImage: coverImage?.uploaded?.url,
+  profileImage: profileImage?.uploaded?.url,
+  galleryUrls: uploadedGalleryUrls,
+  videoUrls: uploadedVideoUrls,
+  mediaMetadata: {
+    coverImage: coverImage?.uploaded ?? null,
+    profileImage: profileImage?.uploaded ?? null,
+    galleryImages: galleryImages.map((item) => item.uploaded).filter(Boolean),
+    videos: videos.map((item) => item.uploaded).filter(Boolean),
+    videoLinks: parsedVideoLinks,
+},
+portfolioUrls: uploadedGalleryUrls,
     website: form.website || null,
   }),
 });
@@ -114,7 +293,7 @@ const amenities = splitLines(form.amenities);
       priceRange:  form.priceRange,
       yearsActive: form.yearsActive,
       website:     form.website,
-      mediaCount:  allMediaUrls.length,
+      mediaCount: uploadedMediaCount,
     });
 
     setIsSuccess(true);
@@ -349,52 +528,146 @@ const amenities = splitLines(form.amenities);
   </div>
 )}
 
-            {/* Step 3 — Portfolio */}
+        {/* Step 3 — Media */}
 {step === 3 && (
   <div className="bg-white rounded-3xl border border-border p-8 md:p-12">
-    <h2 className="text-2xl font-bold mb-2">Gallery & Portfolio</h2>
+    <h2 className="text-2xl font-bold mb-2">Profile Media</h2>
     <p className="text-muted-foreground mb-8">
-      Paste public image URLs for now. These will be used for the public gallery and portfolio showcase after approval.
+      Upload a cover image, profile image, and a small gallery. Images are compressed before upload.
     </p>
 
-    <div className="space-y-6">
-      <div>
-        <label className="text-sm font-medium mb-2 block">Gallery Image URLs</label>
-        <Textarea
-          placeholder={"https://example.com/photo-1.jpg\nhttps://example.com/photo-2.jpg"}
-          value={form.galleryUrls}
-          onChange={e => updateForm("galleryUrls", e.target.value)}
-          className="min-h-[120px] resize-none"
-        />
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="text-sm font-medium mb-2 block">Cover Image *</label>
+          <label className="flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 p-5 text-center hover:border-foreground/40">
+            {coverImage ? (
+              <img src={coverImage.previewUrl} alt="Cover preview" className="h-44 w-full rounded-xl object-cover" />
+            ) : (
+              <>
+                <Upload className="mb-3 h-6 w-6 text-muted-foreground" />
+                <span className="text-sm font-medium">Upload cover</span>
+                <span className="mt-1 text-xs text-muted-foreground">JPG, PNG, WEBP up to 5 MB</span>
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(event) => handleImagePick(event, "cover")}
+            />
+          </label>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium mb-2 block">Profile Image *</label>
+          <label className="flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 p-5 text-center hover:border-foreground/40">
+            {profileImage ? (
+              <img src={profileImage.previewUrl} alt="Profile preview" className="h-44 w-44 rounded-full object-cover" />
+            ) : (
+              <>
+                <ImageIcon className="mb-3 h-6 w-6 text-muted-foreground" />
+                <span className="text-sm font-medium">Upload profile</span>
+                <span className="mt-1 text-xs text-muted-foreground">JPG, PNG, WEBP up to 5 MB</span>
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(event) => handleImagePick(event, "profile")}
+            />
+          </label>
+        </div>
       </div>
 
       <div>
-        <label className="text-sm font-medium mb-2 block">Portfolio Highlight URLs</label>
-        <Textarea
-          placeholder={"https://example.com/best-work-1.jpg\nhttps://example.com/best-work-2.jpg"}
-          value={form.portfolioUrls}
-          onChange={e => updateForm("portfolioUrls", e.target.value)}
-          className="min-h-[120px] resize-none"
-        />
-      </div>
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <label className="text-sm font-medium">Gallery Images</label>
+          <span className="text-xs text-muted-foreground">{galleryImages.length}/{MAX_GALLERY_IMAGES}</span>
+        </div>
+        <label className="flex cursor-pointer items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 p-5 text-center hover:border-foreground/40">
+          <Upload className="mr-2 h-5 w-5 text-muted-foreground" />
+          <span className="text-sm font-medium">Add gallery images</span>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            className="hidden"
+            disabled={galleryImages.length >= MAX_GALLERY_IMAGES}
+            onChange={(event) => handleImagePick(event, "gallery")}
+          />
+        </label>
 
-      {allMediaUrls.length > 0 && (
-        <div className="rounded-2xl border border-border bg-muted/30 p-4">
-          <p className="text-sm font-medium mb-3">{allMediaUrls.length} media link(s) added</p>
-          <div className="space-y-2">
-            {allMediaUrls.map((url) => (
-              <a
-                key={url}
-                href={url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground break-all"
-              >
-                <Link2 className="w-4 h-4 shrink-0" />
-                {url}
-              </a>
+        {galleryImages.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-3">
+            {galleryImages.map((item, index) => (
+              <div key={item.previewUrl} className="relative aspect-square overflow-hidden rounded-xl border border-border bg-muted">
+                <img src={item.previewUrl} alt={`Gallery preview ${index + 1}`} className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  title="Remove image"
+                  onClick={() => removeGalleryImage(index)}
+                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             ))}
           </div>
+        )}
+      </div>
+
+      <div>
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <label className="text-sm font-medium">Optional Videos</label>
+          <span className="text-xs text-muted-foreground">{videos.length}/{MAX_VIDEOS}</span>
+        </div>
+        <label className="flex cursor-pointer items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 p-5 text-center hover:border-foreground/40">
+          <Video className="mr-2 h-5 w-5 text-muted-foreground" />
+          <span className="text-sm font-medium">Add short videos</span>
+          <input
+            type="file"
+            accept="video/mp4,video/quicktime,video/webm"
+            multiple
+            className="hidden"
+            disabled={videos.length >= MAX_VIDEOS}
+            onChange={handleVideoPick}
+          />
+        </label>
+
+        {videos.length > 0 && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+            {videos.map((item, index) => (
+              <div key={item.previewUrl} className="relative overflow-hidden rounded-xl border border-border bg-muted">
+                <video src={item.previewUrl} className="aspect-video w-full object-cover" controls />
+                <button
+                  type="button"
+                  title="Remove video"
+                  onClick={() => removeVideo(index)}
+                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4">
+          <label className="text-sm font-medium mb-2 block">Video Links</label>
+          <Textarea
+            placeholder={"Paste YouTube / Instagram / Drive links, one per line"}
+            value={videoLinks}
+            onChange={(event) => setVideoLinks(event.target.value)}
+            className="min-h-[100px] resize-none"
+          />
+        </div>
+      </div>
+
+      {isUploading && (
+        <div className="rounded-2xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+          Uploading media...
         </div>
       )}
     </div>
@@ -403,13 +676,16 @@ const amenities = splitLines(form.amenities);
       <Button variant="outline" className="rounded-full px-8 h-12" onClick={() => setStep(2)}>
         <ArrowLeft className="w-4 h-4 mr-1" /> Back
       </Button>
-      <Button className="rounded-full px-8 h-12 font-semibold" onClick={() => setStep(4)}>
+      <Button
+        className="rounded-full px-8 h-12 font-semibold"
+        disabled={!coverImage?.uploaded || !profileImage?.uploaded || isUploading}
+        onClick={() => setStep(4)}
+      >
         Continue <ChevronRight className="w-4 h-4 ml-1" />
       </Button>
     </div>
   </div>
 )}
-
             {/* Step 4 — Review */}
             {step === 4 && config && (
               <div className="bg-white rounded-3xl border border-border p-8 md:p-12">
@@ -429,7 +705,7 @@ const amenities = splitLines(form.amenities);
 { label: "Capacity", value: form.capacity || "—" },
 { label: "Tags", value: tags.length ? `${tags.length} added` : "—" },
 { label: "Amenities / Services", value: amenities.length ? `${amenities.length} added` : "—" },
-                    { label: "Media URLs", value: `${allMediaUrls.length} link(s)` },
+                   { label: "Media", value: `${uploadedMediaCount} item(s)` },
                   ].map(({ label, value }) => (
                     <div key={label} className="flex justify-between py-3 border-b border-border/50 last:border-0">
                       <span className="text-sm text-muted-foreground">{label}</span>

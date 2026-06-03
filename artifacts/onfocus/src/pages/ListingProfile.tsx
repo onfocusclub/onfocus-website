@@ -172,11 +172,12 @@ export function ListingProfile() {
 
   const { languages, categories } = parseTags(listing.tags ?? []);
   const whyPickCards = getWhyPickCards(categories);
-  const avatarSrc = listing.images?.[0] || listing.coverImage;
+  const avatarSrc = listing.profileImage || listing.images?.[0] || listing.coverImage;
 
   const galleryImages = Array.from(
   new Set([listing.coverImage, ...(listing.images ?? [])].filter(Boolean))
 );
+const videoUrls = listing.videoUrls ?? [];
 
 const profileCopyByType = {
   artist: {
@@ -430,6 +431,36 @@ const detailsGroups = [
         </div>
       ))}
     </div>
+
+    {videoUrls.length > 0 && (
+  <div className="mt-10">
+    <h3 className="text-lg font-bold mb-4 text-foreground">Videos</h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {videoUrls.map((url) => {
+        const isDirectVideo = /\.(mp4|mov|webm)(\?.*)?$/i.test(url);
+
+        return isDirectVideo ? (
+          <video
+            key={url}
+            src={url}
+            className="aspect-video w-full rounded-xl border border-border/50 bg-muted object-cover"
+            controls
+          />
+        ) : (
+          <a
+            key={url}
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="flex aspect-video items-center justify-center rounded-xl border border-border/50 bg-muted/40 p-4 text-center text-sm font-medium text-foreground hover:bg-muted"
+          >
+            Open video link
+          </a>
+        );
+      })}
+    </div>
+  </div>
+)}
   </TabsContent>
 
   <TabsContent value="portfolio" className="outline-none">

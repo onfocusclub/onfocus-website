@@ -20,6 +20,11 @@ interface Application {
   price_range: string | null;
   website: string | null;
   portfolio_urls: string[];
+  cover_image: string | null;
+  profile_image: string | null;
+  gallery_urls: string[];
+  video_urls: string[];
+  media_metadata: Record<string, unknown> | null;
   years_active: number | null;
 events_completed: number | null;
 capacity: number | null;
@@ -340,21 +345,75 @@ export default function AdminPanel() {
   </div>
 )}
 
-{selected.portfolio_urls?.length > 0 && (
+{(selected.cover_image || selected.profile_image || selected.gallery_urls?.length > 0 || selected.video_urls?.length > 0 || selected.portfolio_urls?.length > 0) && (
   <div>
-    <div className="text-white/40 text-xs uppercase tracking-wider mb-2">Media Links</div>
-    <div className="space-y-2">
-      {selected.portfolio_urls.map((url) => (
-        <a
-          key={url}
-          href={url}
-          target="_blank"
-          rel="noreferrer"
-          className="block text-violet-300 hover:text-violet-200 text-sm break-all"
-        >
-          {url}
-        </a>
-      ))}
+    <div className="text-white/40 text-xs uppercase tracking-wider mb-2">Media</div>
+
+    <div className="space-y-4">
+      {(selected.cover_image || selected.profile_image) && (
+        <div className="grid grid-cols-2 gap-3">
+          {selected.cover_image && (
+            <a href={selected.cover_image} target="_blank" rel="noreferrer" className="block">
+              <div className="text-white/40 text-xs mb-1">Cover</div>
+              <img src={selected.cover_image} alt="Cover" className="aspect-video w-full rounded-lg object-cover border border-white/10" />
+            </a>
+          )}
+          {selected.profile_image && (
+            <a href={selected.profile_image} target="_blank" rel="noreferrer" className="block">
+              <div className="text-white/40 text-xs mb-1">Profile</div>
+              <img src={selected.profile_image} alt="Profile" className="aspect-video w-full rounded-lg object-cover border border-white/10" />
+            </a>
+          )}
+        </div>
+      )}
+
+      {selected.gallery_urls?.length > 0 && (
+        <div>
+          <div className="text-white/40 text-xs mb-2">Gallery</div>
+          <div className="grid grid-cols-3 gap-2">
+            {selected.gallery_urls.map((url) => (
+              <a key={url} href={url} target="_blank" rel="noreferrer">
+                <img src={url} alt="Gallery media" className="aspect-square w-full rounded-lg object-cover border border-white/10" />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {selected.video_urls?.length > 0 && (
+        <div>
+          <div className="text-white/40 text-xs mb-2">Videos / Links</div>
+          <div className="space-y-2">
+            {selected.video_urls.map((url) => (
+              <a
+                key={url}
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="block text-violet-300 hover:text-violet-200 text-sm break-all"
+              >
+                {url}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!selected.cover_image && !selected.profile_image && selected.portfolio_urls?.length > 0 && (
+        <div className="space-y-2">
+          {selected.portfolio_urls.map((url) => (
+            <a
+              key={url}
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className="block text-violet-300 hover:text-violet-200 text-sm break-all"
+            >
+              {url}
+            </a>
+          ))}
+        </div>
+      )}
     </div>
   </div>
 )}
