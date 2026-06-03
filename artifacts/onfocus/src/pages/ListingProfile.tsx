@@ -174,6 +174,76 @@ export function ListingProfile() {
   const whyPickCards = getWhyPickCards(categories);
   const avatarSrc = listing.images?.[0] || listing.coverImage;
 
+  const galleryImages = Array.from(
+  new Set([listing.coverImage, ...(listing.images ?? [])].filter(Boolean))
+);
+
+const profileCopyByType = {
+  artist: {
+    label: "Artist",
+    gallery: "Photos and videos from performances, events, and live setups.",
+    portfolio: "Curated performance highlights and event-ready work.",
+    detailTitle: "Performance Details",
+  },
+  vendor: {
+    label: "Vendor",
+    gallery: "Photos and videos from past services, setups, and finished work.",
+    portfolio: "Selected event work, service showcases, and client-ready examples.",
+    detailTitle: "Service Details",
+  },
+  venue: {
+    label: "Venue",
+    gallery: "Photos and videos of spaces, ambience, seating, and event setups.",
+    portfolio: "Selected event setups and venue transformations.",
+    detailTitle: "Venue Details",
+  },
+} as const;
+
+const profileCopy =
+  profileCopyByType[listing.type as keyof typeof profileCopyByType] ??
+  profileCopyByType.artist;
+
+const shortBio = listing.bio.split(".")[0]?.trim();
+
+const portfolioItems = galleryImages.slice(0, 4).map((image, index) => ({
+  image,
+  title:
+    index === 0
+      ? `${listing.category} Showcase`
+      : `${listing.category} Highlight ${index + 1}`,
+  meta: `${listing.city} · ${profileCopy.label}`,
+  desc:
+    index === 0 && shortBio
+      ? `${shortBio}.`
+      : `A closer look at ${listing.name}'s ${listing.category.toLowerCase()} work for event planners.`,
+}));
+
+const primaryDetails = [
+  `Category: ${listing.category}`,
+  `City: ${listing.city}`,
+  listing.priceRange ? `Starting price: ${listing.priceRange}` : "",
+  listing.yearsActive ? `Experience: ${listing.yearsActive} years active` : "",
+  listing.eventsCompleted ? `Events completed: ${listing.eventsCompleted}+` : "",
+  listing.capacity ? `Capacity: Up to ${listing.capacity} guests` : "",
+].filter(Boolean) as string[];
+
+const detailsGroups = [
+  { title: profileCopy.detailTitle, items: primaryDetails },
+  { title: "Categories", items: categories },
+  { title: "Languages", items: languages },
+  {
+    title:
+      listing.type === "venue"
+        ? "Amenities"
+        : listing.type === "vendor"
+          ? "Services & Inclusions"
+          : "Suitable For",
+    items: listing.amenities ?? [],
+  },
+  { title: "Tags", items: listing.tags ?? [] },
+].filter((group) => group.items.length > 0);
+
+
   return (
     <div className="min-h-screen bg-background pb-32">
       <Toaster />
@@ -302,100 +372,103 @@ export function ListingProfile() {
           {/* ── Main content ────────────────────────────────────────────── */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="about" className="w-full">
-              <TabsList
-                className="w-full justify-start border-b border-border rounded-none p-0 bg-transparent h-auto mb-12 gap-10"
-                data-testid="tabs-profile"
-              >
-                {["about", "portfolio"].map((tab) => (
-                  <TabsTrigger
-                    key={tab}
-                    value={tab}
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 py-4 text-base font-medium data-[state=active]:text-foreground text-muted-foreground transition-all capitalize"
-                    data-testid={`tab-${tab}`}
-                  >
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+  <TabsList
+    className="w-full justify-start border-b border-border rounded-none p-0 bg-transparent h-auto mb-12 gap-8 overflow-x-auto"
+    data-testid="tabs-profile"
+  >
+    {["about", "gallery", "portfolio", "details"].map((tab) => (
+      <TabsTrigger
+        key={tab}
+        value={tab}
+        className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 py-4 text-base font-medium data-[state=active]:text-foreground text-muted-foreground transition-all capitalize whitespace-nowrap"
+        data-testid={`tab-${tab}`}
+      >
+        {tab.charAt(0).toUpperCase() + tab.slice(1)}
+      </TabsTrigger>
+    ))}
+  </TabsList>
 
-              {/* About tab */}
-              <TabsContent value="about" className="space-y-14 outline-none">
-                {/* Bio */}
-                <div>
-                  <h2 className="text-xl font-bold mb-5 text-foreground">About</h2>
-                  <div className="space-y-4">
-                    {listing.bio.split("\n\n").filter(Boolean).map((para, i) => (
-                      <p
-                        key={i}
-                        className="text-base leading-[1.85] text-muted-foreground"
-                        data-testid={i === 0 ? "text-profile-bio" : undefined}
-                      >
-                        {para}
-                      </p>
-                    ))}
-                  </div>
-                </div>
+  <TabsContent value="about" className="space-y-14 outline-none">
+    <div>
+      <h2 className="text-xl font-bold mb-5 text-foreground">About</h2>
+      <div className="space-y-4">
+        {listing.bio.split("\n\n").filter(Boolean).map((para, i) => (
+          <p key={i} className="text-base leading-[1.85] text-muted-foreground">
+            {para}
+          </p>
+        ))}
+      </div>
+    </div>
 
-                {/* Why Pick section */}
-                {whyPickCards.length > 0 && (
-                  <div>
-                    <h2 className="text-xl font-bold mb-7 text-foreground">
-                      Why Pick {listing.name}?
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {whyPickCards.map(({ Icon, title, desc }) => (
-                        <div
-                          key={title}
-                          className="p-5 rounded-xl border border-border/60 bg-muted/30 hover:bg-muted/60 transition-colors"
-                        >
-                          <div className="w-9 h-9 rounded-lg bg-foreground/5 border border-border/60 flex items-center justify-center mb-4">
-                            <Icon className="w-4 h-4 text-foreground/70" />
-                          </div>
-                          <p className="font-semibold text-sm text-foreground mb-1.5 leading-snug">
-                            {title}
-                          </p>
-                          <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+    {whyPickCards.length > 0 && (
+      <div>
+        <h2 className="text-xl font-bold mb-7 text-foreground">
+          Why Pick {listing.name}?
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {whyPickCards.map(({ Icon, title, desc }) => (
+            <div key={title} className="p-5 rounded-xl border border-border/60 bg-muted/30">
+              <Icon className="w-5 h-5 text-foreground/70 mb-4" />
+              <p className="font-semibold text-sm text-foreground mb-1.5">{title}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </TabsContent>
 
-                {/* Amenities */}
-                {listing.amenities && listing.amenities.length > 0 && (
-                  <div>
-                    <h2 className="text-xl font-bold mb-5 text-foreground">Features & Amenities</h2>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-3.5 gap-x-8">
-                      {listing.amenities.map((item) => (
-                        <li key={item} className="flex items-center text-foreground text-sm">
-                          <Check className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </TabsContent>
+  <TabsContent value="gallery" className="outline-none">
+    <div className="mb-8">
+      <h2 className="text-xl font-bold mb-3 text-foreground">Gallery</h2>
+      <p className="text-sm text-muted-foreground">{profileCopy.gallery}</p>
+    </div>
+    <div className="columns-1 sm:columns-2 gap-5 space-y-5">
+      {galleryImages.map((img, i) => (
+        <div key={img} className="break-inside-avoid rounded-xl overflow-hidden bg-muted border border-border/50">
+          <img src={img} alt={`${listing.name} gallery ${i + 1}`} className="w-full h-auto object-cover hover:scale-105 transition-transform duration-700" />
+        </div>
+      ))}
+    </div>
+  </TabsContent>
 
-              {/* Portfolio tab */}
-              <TabsContent value="portfolio" className="outline-none">
-                <div className="columns-1 sm:columns-2 gap-5 space-y-5">
-                  {listing.images.map((img, i) => (
-                    <div
-                      key={i}
-                      className="break-inside-avoid rounded-xl overflow-hidden bg-muted"
-                    >
-                      <img
-                        src={img}
-                        alt={`${listing.name} portfolio ${i + 1}`}
-                        className="w-full h-auto object-cover hover:scale-105 transition-transform duration-700 cursor-pointer"
-                        data-testid={`img-portfolio-${i}`}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
+  <TabsContent value="portfolio" className="outline-none">
+    <div className="mb-8">
+      <h2 className="text-xl font-bold mb-3 text-foreground">Portfolio</h2>
+      <p className="text-sm text-muted-foreground">{profileCopy.portfolio}</p>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {portfolioItems.map((item) => (
+        <div key={item.title} className="rounded-2xl overflow-hidden border border-border/60 bg-white">
+          <img src={item.image} alt={item.title} className="aspect-[4/3] w-full object-cover" />
+          <div className="p-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">{item.meta}</p>
+            <h3 className="font-bold text-lg mb-2 text-foreground">{item.title}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </TabsContent>
+
+  <TabsContent value="details" className="outline-none">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {detailsGroups.map((group) => (
+        <div key={group.title} className="rounded-2xl border border-border/60 bg-white p-6">
+          <h2 className="text-lg font-bold mb-5 text-foreground">{group.title}</h2>
+          <ul className="space-y-3">
+            {group.items.map((item) => (
+              <li key={item} className="flex items-start gap-3 text-sm text-foreground">
+                <Check className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </TabsContent>
+</Tabs>
           </div>
 
           {/* ── Sidebar ─────────────────────────────────────────────────── */}

@@ -4,33 +4,75 @@ import { Pool } from "pg";
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const router = Router();
 
-// POST /api/partner-applications
-router.post("/", async (req: Request, res: Response) => {
-  const { partnerType, businessName, contactName, email, phone, city, category, description, priceRange, portfolioUrls, website } = req.body;
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(String).map((item) => item.trim()).filter(Boolean);
+}
 
-  if (!partnerType || !businessName || !email || !city) {
-    return res.status(400).json({ error: "Missing required fields" });
+function toNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : null;
+}
+
+function firstImage(urls: string[]) {
+  return urls.find((url) => /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url)) ?? urls[0] ?? "";
+}
+
+// POST /api/partner-applications
+router.post("/", async (req: Request, res: Response): Promise<void> => {
+  const {
+    partnerType,
+    businessName,
+    email,
+    phone,
+    city,
+    category,
+    description,
+    priceRange,
+    portfolioUrls,
+    website,
+    yearsActive,
+    eventsCompleted,
+    capacity,
+    tags,
+    amenities,
+  } = req.body;
+
+  if (!partnerType || !businessName || !email || !city || !category || !description) {
+   res.status(400).json({ error: "Missing required fields" });
+return;
   }
 
   try {
     const result = await pool.query(
       `INSERT INTO partner_applications
-         (name, email, phone, type, category, city, description, website, price_range, portfolio_urls, status, submitted_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',NOW())
+        (
+          name, email, phone, type, category, city, description, website,
+          price_range, portfolio_urls, years_active, events_completed,
+          capacity, tags, amenities, status, submitted_at
+        )
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'pending',NOW())
        RETURNING *`,
       [
         businessName,
         email,
         phone ?? null,
         partnerType,
-        category ?? null,
+        category,
         city,
-        description ?? null,
+        description,
         website ?? null,
         priceRange ?? null,
-        portfolioUrls ?? [],
+        toStringArray(portfolioUrls),
+        toNullableNumber(yearsActive),
+        toNullableNumber(eventsCompleted),
+        toNullableNumber(capacity),
+        toStringArray(tags),
+        toStringArray(amenities),
       ]
     );
+
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error("Error inserting partner application:", err);
@@ -41,8 +83,8 @@ router.post("/", async (req: Request, res: Response) => {
 // GET /api/partner-applications
 router.get("/", async (req: Request, res: Response) => {
   const status = req.query.status as string | undefined;
-  const page   = parseInt((req.query.page as string) ?? "1", 10);
-  const limit  = parseInt((req.query.limit as string) ?? "20", 10);
+  const page = parseInt((req.query.page as string) ?? "1", 10);
+  const limit = parseInt((req.query.limit as string) ?? "20", 10);
   const offset = (page - 1) * limit;
 
   try {
@@ -71,13 +113,16 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // GET /api/partner-applications/:id
-router.get("/:id", async (req: Request, res: Response) => {
+router.get("/:id", async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
       "SELECT * FROM partner_applications WHERE id = $1",
       [req.params.id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
+   if (result.rows.length === 0) {
+  res.status(404).json({ error: "Not found" });
+  return;
+}
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch application" });
@@ -85,25 +130,74 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/partner-applications/:id/status
-router.patch("/:id/status", async (req: Request, res: Response) => {
+router.patch("/:id/status", async (req: Request, res: Response): Promise<void> => {
   const { status, adminNotes, reviewedBy } = req.body;
 
   if (!["approved", "rejected", "pending"].includes(status)) {
-    return res.status(400).json({ error: "Invalid status" });
+   res.status(400).json({ error: "Invalid status" });
+return;
   }
 
+  const client = await pool.connect();
+
   try {
-    const result = await pool.query(
+    await client.query("BEGIN");
+
+    const updateResult = await client.query(
       `UPDATE partner_applications
        SET status=$1, admin_notes=$2, reviewed_at=NOW(), reviewed_by=$3
-       WHERE id=$4 RETURNING *`,
+       WHERE id=$4
+       RETURNING *`,
       [status, adminNotes ?? null, reviewedBy ?? null, req.params.id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
-    res.json(result.rows[0]);
+
+    if (updateResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+     res.status(404).json({ error: "Not found" });
+return;
+    }
+
+    const application = updateResult.rows[0];
+
+    if (status === "approved") {
+      const mediaUrls = toStringArray(application.portfolio_urls);
+      const coverImage = firstImage(mediaUrls);
+
+      await client.query(
+        `INSERT INTO listings
+          (
+            type, name, category, city, rating, review_count, bio,
+            cover_image, images, tags, verified, featured,
+            years_active, events_completed, price_range, capacity, amenities
+          )
+         VALUES ($1,$2,$3,$4,4.5,0,$5,$6,$7,$8,true,false,$9,$10,$11,$12,$13)
+         ON CONFLICT DO NOTHING`,
+        [
+          application.type,
+          application.name,
+          application.category,
+          application.city,
+          application.description,
+          coverImage,
+          mediaUrls,
+          toStringArray(application.tags),
+          application.years_active,
+          application.events_completed,
+          application.price_range,
+          application.capacity,
+          toStringArray(application.amenities),
+        ]
+      );
+    }
+
+    await client.query("COMMIT");
+    res.json(application);
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error("Error updating status:", err);
     res.status(500).json({ error: "Failed to update status" });
+  } finally {
+    client.release();
   }
 });
 

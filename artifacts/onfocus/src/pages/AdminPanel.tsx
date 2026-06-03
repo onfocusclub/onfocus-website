@@ -20,6 +20,11 @@ interface Application {
   price_range: string | null;
   website: string | null;
   portfolio_urls: string[];
+  years_active: number | null;
+events_completed: number | null;
+capacity: number | null;
+tags: string[];
+amenities: string[];
   status: Status;
   admin_notes: string | null;
   submitted_at: string;
@@ -142,8 +147,8 @@ export default function AdminPanel() {
 
   const filtered = applications.filter(a =>
     search === "" ||
-    a.business_name.toLowerCase().includes(search.toLowerCase()) ||
-    a.contact_name.toLowerCase().includes(search.toLowerCase()) ||
+    a.name.toLowerCase().includes(search.toLowerCase()) ||
+    a.name.toLowerCase().includes(search.toLowerCase()) ||
     a.email.toLowerCase().includes(search.toLowerCase()) ||
     a.city.toLowerCase().includes(search.toLowerCase())
   );
@@ -226,11 +231,11 @@ export default function AdminPanel() {
                 {filtered.map(app => (
                   <tr key={app.id} className="hover:bg-white/5 transition-colors cursor-pointer" onClick={() => openDrawer(app)}>
                     <td className="px-4 py-3">
-                      <div className="font-medium">{app.business_name}</div>
-                      <div className="text-white/40 text-xs">{app.contact_name}</div>
+                      <div className="font-medium">{app.name}</div>
+<div className="text-white/40 text-xs">{app.email}</div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell capitalize text-white/60">
-                      {TYPE_EMOJI[app.partner_type] ?? "❓"} {app.partner_type}
+                      {TYPE_EMOJI[app.type] ?? "?"} {app.type}
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell text-white/60">{app.city}</td>
                     <td className="px-4 py-3 hidden lg:table-cell text-white/40">{fmtDate(app.submitted_at)}</td>
@@ -273,8 +278,8 @@ export default function AdminPanel() {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="text-xs text-white/40 uppercase tracking-widest mb-1">Application #{selected.id}</div>
-                    <h2 className="text-xl font-bold">{selected.business_name}</h2>
-                    <p className="text-white/50 text-sm capitalize">{TYPE_EMOJI[selected.partner_type]} {selected.partner_type} · {selected.city}</p>
+                   <h2 className="text-xl font-bold">{selected.name}</h2>
+<p className="text-white/50 text-sm capitalize">{TYPE_EMOJI[selected.type] ?? "?"} {selected.type} · {selected.city}</p>
                   </div>
                   <button onClick={() => setDrawerOpen(false)} className="text-white/40 hover:text-white text-2xl leading-none">×</button>
                 </div>
@@ -283,12 +288,15 @@ export default function AdminPanel() {
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   {[
-                    { label: "Contact",     value: selected.contact_name },
+                    { label: "Contact",     value: selected.name },
                     { label: "Email",       value: selected.email },
                     { label: "Phone",       value: selected.phone ?? "—" },
                     { label: "City",        value: selected.city },
-                    { label: "Price Range", value: selected.price_range ?? "—" },
-                    { label: "Submitted",   value: fmtDate(selected.submitted_at) },
+                   { label: "Price Range", value: selected.price_range ?? "—" },
+{ label: "Years Active", value: selected.years_active?.toString() ?? "—" },
+{ label: "Events Done", value: selected.events_completed?.toString() ?? "—" },
+{ label: "Capacity", value: selected.capacity?.toString() ?? "—" },
+{ label: "Submitted",   value: fmtDate(selected.submitted_at) },
                     { label: "Reviewed",    value: fmtDate(selected.reviewed_at) },
                     { label: "Reviewed by", value: selected.reviewed_by ?? "—" },
                   ].map(({ label, value }) => (
@@ -305,6 +313,51 @@ export default function AdminPanel() {
                     <p className="text-white/80 text-sm leading-relaxed">{selected.description}</p>
                   </div>
                 )}
+
+                {selected.tags?.length > 0 && (
+  <div>
+    <div className="text-white/40 text-xs uppercase tracking-wider mb-2">Tags</div>
+    <div className="flex flex-wrap gap-2">
+      {selected.tags.map((tag) => (
+        <span key={tag} className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-white/70">
+          {tag}
+        </span>
+      ))}
+    </div>
+  </div>
+)}
+
+{selected.amenities?.length > 0 && (
+  <div>
+    <div className="text-white/40 text-xs uppercase tracking-wider mb-2">Amenities / Services</div>
+    <div className="flex flex-wrap gap-2">
+      {selected.amenities.map((item) => (
+        <span key={item} className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-white/70">
+          {item}
+        </span>
+      ))}
+    </div>
+  </div>
+)}
+
+{selected.portfolio_urls?.length > 0 && (
+  <div>
+    <div className="text-white/40 text-xs uppercase tracking-wider mb-2">Media Links</div>
+    <div className="space-y-2">
+      {selected.portfolio_urls.map((url) => (
+        <a
+          key={url}
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="block text-violet-300 hover:text-violet-200 text-sm break-all"
+        >
+          {url}
+        </a>
+      ))}
+    </div>
+  </div>
+)}
 
                 <div>
                   <label className="text-white/40 text-xs uppercase tracking-wider block mb-2">Admin Notes (optional)</label>

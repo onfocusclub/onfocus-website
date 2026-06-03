@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
+import { Music, Camera, Building2, ChevronRight, Link2, Check, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Music, Camera, Building2, ChevronRight, Upload, X, Check, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,59 +41,61 @@ const TYPE_CONFIG = {
 
 const STEPS = ["Choose Type", "Basic Info", "About & Pricing", "Portfolio", "Review"];
 
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+
+function splitLines(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 export function Join() {
   const [step, setStep] = useState(0);
   const [type, setType] = useState<ListingType | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
-  const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
-
+  
   const [form, setForm] = useState({
     name: "", email: "", phone: "", city: "", category: "",
-    bio: "", priceRange: "", yearsActive: "", website: "",
+   bio: "", priceRange: "", yearsActive: "", eventsCompleted: "", capacity: "", website: "",
+tags: "", amenities: "", galleryUrls: "", portfolioUrls: "",
   });
 
   function updateForm(key: string, value: string) {
     setForm(prev => ({ ...prev, [key]: value }));
   }
 
-  function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files || []);
-    const newFiles = [...mediaFiles, ...files].slice(0, 10);
-    setMediaFiles(newFiles);
-    const previews = newFiles.map(f => URL.createObjectURL(f));
-    setMediaPreviews(previews);
-  }
-
-  function removeFile(i: number) {
-    const newFiles = mediaFiles.filter((_, idx) => idx !== i);
-    const newPreviews = mediaPreviews.filter((_, idx) => idx !== i);
-    setMediaFiles(newFiles);
-    setMediaPreviews(newPreviews);
-  }
-
+  const galleryUrls = splitLines(form.galleryUrls);
+const portfolioUrls = splitLines(form.portfolioUrls);
+const allMediaUrls = Array.from(new Set([...galleryUrls, ...portfolioUrls]));
+const tags = splitLines(form.tags);
+const amenities = splitLines(form.amenities);
   async function handleSubmit() {
   setIsSubmitting(true);
   try {
     // 1. Save to your Neon DB via backend
-    const apiRes = await fetch(`${import.meta.env.VITE_API_URL}/api/partner-applications`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-  partnerType:   type,         
-  businessName:  form.name,     
-  contactName:   form.name,   
-  email:         form.email,
-  phone:         form.phone || null,
-  city:          form.city,
-  category:      form.category,
-  description:   form.bio,
-  priceRange:    form.priceRange || null,
-  portfolioUrls: [],
-}),
-    });
+    const apiRes = await fetch(`${API_BASE}/api/partner-applications`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    partnerType: type,
+    businessName: form.name,
+    contactName: form.name,
+    email: form.email,
+    phone: form.phone || null,
+    city: form.city,
+    category: form.category,
+    description: form.bio,
+    priceRange: form.priceRange || null,
+    yearsActive: form.yearsActive ? Number(form.yearsActive) : null,
+    eventsCompleted: form.eventsCompleted ? Number(form.eventsCompleted) : null,
+    capacity: form.capacity ? Number(form.capacity) : null,
+    tags,
+    amenities,
+    portfolioUrls: allMediaUrls,
+    website: form.website || null,
+  }),
+});
 
     if (!apiRes.ok) {
       const err = await apiRes.json();
@@ -112,7 +114,7 @@ export function Join() {
       priceRange:  form.priceRange,
       yearsActive: form.yearsActive,
       website:     form.website,
-      mediaCount:  mediaFiles.length,
+      mediaCount:  allMediaUrls.length,
     });
 
     setIsSuccess(true);
@@ -252,66 +254,161 @@ export function Join() {
               </div>
             )}
 
-            {/* Step 2 — About & Pricing */}
-            {step === 2 && (
-              <div className="bg-white rounded-3xl border border-border p-8 md:p-12">
-                <h2 className="text-2xl font-bold mb-8">About & Pricing</h2>
-                <div className="space-y-6">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">About Your Work *</label>
-                    <Textarea placeholder="Tell us about your experience, style, and what makes your work unique..." value={form.bio} onChange={e => updateForm("bio", e.target.value)} className="min-h-[150px] resize-none" />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Price Range <span className="text-muted-foreground">(Optional)</span></label>
-                      <Input placeholder="e.g. ₹15,000 - ₹50,000" value={form.priceRange} onChange={e => updateForm("priceRange", e.target.value)} className="h-12" />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Years Active <span className="text-muted-foreground">(Optional)</span></label>
-                      <Input type="number" placeholder="e.g. 5" value={form.yearsActive} onChange={e => updateForm("yearsActive", e.target.value)} className="h-12" />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-between mt-10">
-                  <Button variant="outline" className="rounded-full px-8 h-12" onClick={() => setStep(1)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-                  <Button className="rounded-full px-8 h-12 font-semibold" disabled={!form.bio} onClick={() => setStep(3)}>Continue <ChevronRight className="w-4 h-4 ml-1" /></Button>
-                </div>
-              </div>
-            )}
+           {/* Step 2 — About & Profile Details */}
+{step === 2 && (
+  <div className="bg-white rounded-3xl border border-border p-8 md:p-12">
+    <h2 className="text-2xl font-bold mb-8">About & Profile Details</h2>
+    <div className="space-y-6">
+      <div>
+        <label className="text-sm font-medium mb-2 block">About Your Work *</label>
+        <Textarea
+          placeholder="Tell us about your experience, style, and what makes your work unique..."
+          value={form.bio}
+          onChange={e => updateForm("bio", e.target.value)}
+          className="min-h-[150px] resize-none"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="text-sm font-medium mb-2 block">Price Range</label>
+          <Input
+            placeholder="e.g. ₹15,000 - ₹50,000"
+            value={form.priceRange}
+            onChange={e => updateForm("priceRange", e.target.value)}
+            className="h-12"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium mb-2 block">Years Active</label>
+          <Input
+            type="number"
+            placeholder="e.g. 5"
+            value={form.yearsActive}
+            onChange={e => updateForm("yearsActive", e.target.value)}
+            className="h-12"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium mb-2 block">Events Completed</label>
+          <Input
+            type="number"
+            placeholder="e.g. 120"
+            value={form.eventsCompleted}
+            onChange={e => updateForm("eventsCompleted", e.target.value)}
+            className="h-12"
+          />
+        </div>
+        {type === "venue" && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Guest Capacity</label>
+            <Input
+              type="number"
+              placeholder="e.g. 500"
+              value={form.capacity}
+              onChange={e => updateForm("capacity", e.target.value)}
+              className="h-12"
+            />
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label className="text-sm font-medium mb-2 block">
+          {type === "artist" ? "Languages / Genres / Tags" : type === "vendor" ? "Services / Tags" : "Venue Tags"}
+        </label>
+        <Textarea
+          placeholder={"One per line, e.g.\nHindi\nWedding\nLive Performer"}
+          value={form.tags}
+          onChange={e => updateForm("tags", e.target.value)}
+          className="min-h-[110px] resize-none"
+        />
+      </div>
+
+      <div>
+        <label className="text-sm font-medium mb-2 block">
+          {type === "artist" ? "Suitable For" : type === "vendor" ? "Package Inclusions / Services" : "Amenities"}
+        </label>
+        <Textarea
+          placeholder={"One per line, e.g.\nWeddings\nCorporate Events\nPrivate Parties"}
+          value={form.amenities}
+          onChange={e => updateForm("amenities", e.target.value)}
+          className="min-h-[110px] resize-none"
+        />
+      </div>
+    </div>
+
+    <div className="flex justify-between mt-10">
+      <Button variant="outline" className="rounded-full px-8 h-12" onClick={() => setStep(1)}>
+        <ArrowLeft className="w-4 h-4 mr-1" /> Back
+      </Button>
+      <Button className="rounded-full px-8 h-12 font-semibold" disabled={!form.bio} onClick={() => setStep(3)}>
+        Continue <ChevronRight className="w-4 h-4 ml-1" />
+      </Button>
+    </div>
+  </div>
+)}
 
             {/* Step 3 — Portfolio */}
-            {step === 3 && (
-              <div className="bg-white rounded-3xl border border-border p-8 md:p-12">
-                <h2 className="text-2xl font-bold mb-2">Portfolio</h2>
-                <p className="text-muted-foreground mb-8">Upload photos and videos showcasing your work (max 10 files)</p>
-                <div className="border-2 border-dashed border-border rounded-2xl p-10 text-center cursor-pointer hover:border-foreground transition-colors" onClick={() => fileRef.current?.click()}>
-                  <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                  <p className="font-medium mb-1">Click to upload photos & videos</p>
-                  <p className="text-sm text-muted-foreground">JPG, PNG, MP4, MOV up to 50MB each</p>
-                  <input ref={fileRef} type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleFiles} />
-                </div>
-                {mediaPreviews.length > 0 && (
-                  <div className="grid grid-cols-3 md:grid-cols-5 gap-3 mt-6">
-                    {mediaPreviews.map((src, i) => (
-                      <div key={i} className="relative aspect-square rounded-xl overflow-hidden group">
-                        {mediaFiles[i]?.type.startsWith("video") ? (
-                          <video src={src} className="w-full h-full object-cover" />
-                        ) : (
-                          <img src={src} alt="" className="w-full h-full object-cover" />
-                        )}
-                        <button onClick={() => removeFile(i)} className="absolute top-1 right-1 w-6 h-6 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <X className="w-3 h-3 text-white" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="flex justify-between mt-10">
-                  <Button variant="outline" className="rounded-full px-8 h-12" onClick={() => setStep(2)}><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-                  <Button className="rounded-full px-8 h-12 font-semibold" onClick={() => setStep(4)}>Continue <ChevronRight className="w-4 h-4 ml-1" /></Button>
-                </div>
-              </div>
-            )}
+{step === 3 && (
+  <div className="bg-white rounded-3xl border border-border p-8 md:p-12">
+    <h2 className="text-2xl font-bold mb-2">Gallery & Portfolio</h2>
+    <p className="text-muted-foreground mb-8">
+      Paste public image URLs for now. These will be used for the public gallery and portfolio showcase after approval.
+    </p>
+
+    <div className="space-y-6">
+      <div>
+        <label className="text-sm font-medium mb-2 block">Gallery Image URLs</label>
+        <Textarea
+          placeholder={"https://example.com/photo-1.jpg\nhttps://example.com/photo-2.jpg"}
+          value={form.galleryUrls}
+          onChange={e => updateForm("galleryUrls", e.target.value)}
+          className="min-h-[120px] resize-none"
+        />
+      </div>
+
+      <div>
+        <label className="text-sm font-medium mb-2 block">Portfolio Highlight URLs</label>
+        <Textarea
+          placeholder={"https://example.com/best-work-1.jpg\nhttps://example.com/best-work-2.jpg"}
+          value={form.portfolioUrls}
+          onChange={e => updateForm("portfolioUrls", e.target.value)}
+          className="min-h-[120px] resize-none"
+        />
+      </div>
+
+      {allMediaUrls.length > 0 && (
+        <div className="rounded-2xl border border-border bg-muted/30 p-4">
+          <p className="text-sm font-medium mb-3">{allMediaUrls.length} media link(s) added</p>
+          <div className="space-y-2">
+            {allMediaUrls.map((url) => (
+              <a
+                key={url}
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground break-all"
+              >
+                <Link2 className="w-4 h-4 shrink-0" />
+                {url}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+
+    <div className="flex justify-between mt-10">
+      <Button variant="outline" className="rounded-full px-8 h-12" onClick={() => setStep(2)}>
+        <ArrowLeft className="w-4 h-4 mr-1" /> Back
+      </Button>
+      <Button className="rounded-full px-8 h-12 font-semibold" onClick={() => setStep(4)}>
+        Continue <ChevronRight className="w-4 h-4 ml-1" />
+      </Button>
+    </div>
+  </div>
+)}
 
             {/* Step 4 — Review */}
             {step === 4 && config && (
@@ -327,8 +424,12 @@ export function Join() {
                     { label: "City", value: form.city },
                     { label: "Category", value: form.category },
                     { label: "Price Range", value: form.priceRange || "—" },
-                    { label: "Years Active", value: form.yearsActive || "—" },
-                    { label: "Portfolio Files", value: `${mediaFiles.length} file(s)` },
+                    
+                    { label: "Events Completed", value: form.eventsCompleted || "—" },
+{ label: "Capacity", value: form.capacity || "—" },
+{ label: "Tags", value: tags.length ? `${tags.length} added` : "—" },
+{ label: "Amenities / Services", value: amenities.length ? `${amenities.length} added` : "—" },
+                    { label: "Media URLs", value: `${allMediaUrls.length} link(s)` },
                   ].map(({ label, value }) => (
                     <div key={label} className="flex justify-between py-3 border-b border-border/50 last:border-0">
                       <span className="text-sm text-muted-foreground">{label}</span>
