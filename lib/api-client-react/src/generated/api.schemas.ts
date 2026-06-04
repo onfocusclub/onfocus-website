@@ -9,6 +9,15 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface PortfolioItem {
+  image: string;
+  eventName: string;
+  about: string;
+  genre: string;
+  /** @nullable */
+  attendees?: number | null;
+}
+
 export type ListingType = typeof ListingType[keyof typeof ListingType];
 
 
@@ -35,6 +44,7 @@ export interface Listing {
   images: string[];
   videoUrls: string[];
   mediaMetadata: ListingMediaMetadata;
+  portfolioItems: PortfolioItem[];
   tags: string[];
   verified: boolean;
   featured: boolean;
@@ -127,6 +137,7 @@ export interface PartnerApplicationInput {
   city: string;
   description: string;
   website?: string;
+  portfolioItems?: PortfolioItem[];
 }
 
 export interface InquiryConfirmation {

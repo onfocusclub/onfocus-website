@@ -12,6 +12,12 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+function normalizeListing<T extends { portfolioItems?: unknown }>(listing: T) {
+  return {
+    ...listing,
+    portfolioItems: Array.isArray(listing.portfolioItems) ? listing.portfolioItems : [],
+  };
+}
 
 router.get("/listings/featured", async (_req, res): Promise<void> => {
   const artists = await db
@@ -33,7 +39,11 @@ router.get("/listings/featured", async (_req, res): Promise<void> => {
     .limit(4);
 
   res.json(
-    GetFeaturedListingsResponse.parse({ artists, vendors, venues })
+    GetFeaturedListingsResponse.parse({
+  artists: artists.map(normalizeListing),
+  vendors: vendors.map(normalizeListing),
+  venues: venues.map(normalizeListing),
+})
   );
 });
 
@@ -92,7 +102,12 @@ router.get("/listings", async (req, res): Promise<void> => {
     .from(listingsTable)
     .where(whereClause);
 
-  res.json(ListListingsResponse.parse({ listings, total, limit, offset }));
+ res.json(ListListingsResponse.parse({
+  listings: listings.map(normalizeListing),
+  total,
+  limit,
+  offset,
+}));
 });
 
 router.post("/listings", async (req, res): Promise<void> => {
@@ -135,7 +150,7 @@ router.get("/listings/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(GetListingResponse.parse(listing));
+  res.json(GetListingResponse.parse(normalizeListing(listing)));
 });
 
 export default router;

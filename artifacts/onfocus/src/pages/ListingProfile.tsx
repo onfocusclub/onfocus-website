@@ -206,18 +206,24 @@ const profileCopy =
 
 const shortBio = listing.bio.split(".")[0]?.trim();
 
-const portfolioItems = galleryImages.slice(0, 4).map((image, index) => ({
+const generatedPortfolioItems = galleryImages.slice(0, 4).map((image, index) => ({
   image,
-  title:
+  eventName:
     index === 0
       ? `${listing.category} Showcase`
       : `${listing.category} Highlight ${index + 1}`,
-  meta: `${listing.city} · ${profileCopy.label}`,
-  desc:
+  about:
     index === 0 && shortBio
       ? `${shortBio}.`
       : `A closer look at ${listing.name}'s ${listing.category.toLowerCase()} work for event planners.`,
+  genre: listing.category,
+  attendees: null as number | null,
 }));
+
+const portfolioItems =
+  listing.portfolioItems && listing.portfolioItems.length > 0
+    ? listing.portfolioItems
+    : generatedPortfolioItems;
 
 const primaryDetails = [
   `Category: ${listing.category}`,
@@ -470,15 +476,18 @@ const detailsGroups = [
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {portfolioItems.map((item) => (
-        <div key={item.title} className="rounded-2xl overflow-hidden border border-border/60 bg-white">
-          <img src={item.image} alt={item.title} className="aspect-[4/3] w-full object-cover" />
-          <div className="p-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">{item.meta}</p>
-            <h3 className="font-bold text-lg mb-2 text-foreground">{item.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-          </div>
-        </div>
-      ))}
+  <div key={`${item.image}-${item.eventName}`} className="rounded-2xl overflow-hidden border border-border/60 bg-white">
+    <img src={item.image} alt={item.eventName} className="aspect-[4/3] w-full object-cover" />
+    <div className="p-5">
+      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+        {item.genre}
+        {item.attendees ? ` · ${item.attendees} attendees` : ""}
+      </p>
+      <h3 className="font-bold text-lg mb-2 text-foreground">{item.eventName}</h3>
+      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{item.about}</p>
+    </div>
+  </div>
+))}
     </div>
   </TabsContent>
 

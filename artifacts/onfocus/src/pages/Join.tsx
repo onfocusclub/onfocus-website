@@ -27,6 +27,13 @@ type MediaSlot = {
   uploaded?: UploadedMedia;
 };
 
+type PortfolioDraft = {
+  eventName: string;
+  about: string;
+  genre: string;
+  attendees: string;
+};
+
 const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 const VIDEO_MAX_BYTES = 10 * 1024 * 1024;
 const MAX_GALLERY_IMAGES = 5;
@@ -80,6 +87,7 @@ export function Join() {
   const [coverImage, setCoverImage] = useState<MediaSlot | null>(null);
   const [profileImage, setProfileImage] = useState<MediaSlot | null>(null);
   const [galleryImages, setGalleryImages] = useState<MediaSlot[]>([]);
+  const [portfolioDrafts, setPortfolioDrafts] = useState<PortfolioDraft[]>([]);
   const [videos, setVideos] = useState<MediaSlot[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   
@@ -92,6 +100,25 @@ export function Join() {
   function updateForm(key: string, value: string) {
     setForm(prev => ({ ...prev, [key]: value }));
   }
+
+  function updatePortfolioDraft(index: number, key: keyof PortfolioDraft, value: string) {
+  setPortfolioDrafts((prev) => {
+    const next = [...prev];
+    const current = next[index] ?? {
+      eventName: "",
+      about: "",
+      genre: "",
+      attendees: "",
+    };
+
+    next[index] = {
+      ...current,
+      [key]: value,
+    };
+
+    return next;
+  });
+}
 
  const tags = splitLines(form.tags);
 const amenities = splitLines(form.amenities);
@@ -113,7 +140,7 @@ const uploadedMediaCount =
 
 async function prepareImage(file: File) {
   if (file.size > IMAGE_MAX_BYTES) {
-    throw new Error("Each image must be 5 MB or smaller before compression.");
+    throw new Error("Image is too large. Please upload an image up to 5 MB.");
   }
 
   return imageCompression(file, {
@@ -134,8 +161,8 @@ async function uploadFiles(files: File[]) {
 
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.error || "Failed to upload media");
-  }
+  throw new Error(data.error || "Upload failed. Please check file size and try again.");
+}
 
   return data.media as UploadedMedia[];
 }
@@ -173,8 +200,17 @@ async function handleImagePick(
       revokeSlot(profileImage);
       setProfileImage(slots[0]);
     } else {
-      setGalleryImages((prev) => [...prev, ...slots].slice(0, MAX_GALLERY_IMAGES));
-    }
+  setGalleryImages((prev) => [...prev, ...slots].slice(0, MAX_GALLERY_IMAGES));
+  setPortfolioDrafts((prev) => [
+    ...prev,
+    ...slots.map(() => ({
+      eventName: "",
+      about: "",
+      genre: "",
+      attendees: "",
+    })),
+  ].slice(0, MAX_GALLERY_IMAGES));
+}
   } catch (err) {
     alert(err instanceof Error ? err.message : "Image upload failed");
   } finally {
@@ -193,7 +229,7 @@ async function handleVideoPick(event: ChangeEvent<HTMLInputElement>) {
 
   const oversized = selected.find((file) => file.size > VIDEO_MAX_BYTES);
   if (oversized) {
-   alert("Each video must be 10 MB or smaller.");
+   alert("Video is too large. Please upload a video up to 10 MB.");
     return;
   }
 
@@ -219,6 +255,7 @@ function removeGalleryImage(index: number) {
     const next = [...prev];
     const [removed] = next.splice(index, 1);
     revokeSlot(removed ?? null);
+    setPortfolioDrafts((drafts) => drafts.filter((_, draftIndex) => draftIndex !== index));
     return next;
   });
 }
@@ -231,6 +268,20 @@ function removeVideo(index: number) {
     return next;
   });
 }
+
+const portfolioItems = galleryImages
+  .map((item, index) => ({
+    image: item.uploaded?.url ?? "",
+    eventName: portfolioDrafts[index]?.eventName ?? "",
+    about: portfolioDrafts[index]?.about ?? "",
+    genre: portfolioDrafts[index]?.genre ?? form.category,
+    attendees: portfolioDrafts[index]?.attendees
+      ? Number(portfolioDrafts[index].attendees)
+      : null,
+  }))
+  .filter((item) => item.image && item.eventName && item.about && item.genre);
+
+
   async function handleSubmit() {
   if (!coverImage?.uploaded || !profileImage?.uploaded) {
   alert("Please upload a cover image and profile image before submitting.");
@@ -269,6 +320,7 @@ function removeVideo(index: number) {
    
 },
 portfolioUrls: uploadedGalleryUrls,
+portfolioItems,
     website: form.website || null,
   }),
 });
@@ -597,22 +649,55 @@ portfolioUrls: uploadedGalleryUrls,
         </label>
 
         {galleryImages.length > 0 && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-3">
-            {galleryImages.map((item, index) => (
-              <div key={item.previewUrl} className="relative aspect-square overflow-hidden rounded-xl border border-border bg-muted">
-                <img src={item.previewUrl} alt={`Gallery preview ${index + 1}`} className="h-full w-full object-cover" />
-                <button
-                  type="button"
-                  title="Remove image"
-                  onClick={() => removeGalleryImage(index)}
-                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+  <div className="mt-4 space-y-4">
+    {galleryImages.map((item, index) => (
+      <div key={item.previewUrl} className="rounded-2xl border border-border bg-muted/20 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-4">
+          <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-muted">
+            <img src={item.previewUrl} alt={`Gallery preview ${index + 1}`} className="h-full w-full object-cover" />
+            <button
+              type="button"
+              title="Remove image"
+              onClick={() => removeGalleryImage(index)}
+              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-        )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Input
+              placeholder="Event name"
+              value={portfolioDrafts[index]?.eventName ?? ""}
+              onChange={(event) => updatePortfolioDraft(index, "eventName", event.target.value)}
+              className="h-11 bg-white"
+            />
+            <Input
+              placeholder="Genre / style"
+              value={portfolioDrafts[index]?.genre ?? ""}
+              onChange={(event) => updatePortfolioDraft(index, "genre", event.target.value)}
+              className="h-11 bg-white"
+            />
+            <Input
+              type="number"
+              min="0"
+              placeholder="Attendees"
+              value={portfolioDrafts[index]?.attendees ?? ""}
+              onChange={(event) => updatePortfolioDraft(index, "attendees", event.target.value)}
+              className="h-11 bg-white"
+            />
+            <Textarea
+              placeholder="Short about this event"
+              value={portfolioDrafts[index]?.about ?? ""}
+              onChange={(event) => updatePortfolioDraft(index, "about", event.target.value)}
+              className="min-h-[88px] resize-none bg-white md:col-span-2"
+            />
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
       </div>
 
       <div>

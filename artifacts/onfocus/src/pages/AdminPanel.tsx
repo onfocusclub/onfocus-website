@@ -8,6 +8,14 @@ const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 type Status = "pending" | "approved" | "rejected";
 
+type PortfolioItem = {
+  image: string;
+  eventName: string;
+  about: string;
+  genre: string;
+  attendees?: number | null;
+};
+
 interface Application {
   id: number;
   type: string;          
@@ -25,6 +33,7 @@ interface Application {
   gallery_urls: string[];
   video_urls: string[];
   media_metadata: Record<string, unknown> | null;
+  portfolio_items: PortfolioItem[];
   years_active: number | null;
 events_completed: number | null;
 capacity: number | null;
@@ -418,6 +427,36 @@ export default function AdminPanel() {
   </div>
 )}
 
+
+ {selected.portfolio_items?.length > 0 && (
+  <div>
+    <div className="text-white/40 text-xs uppercase tracking-wider mb-2">Portfolio Details</div>
+    <div className="space-y-3">
+      {selected.portfolio_items.map((item) => (
+        <a
+          key={`${item.image}-${item.eventName}`}
+          href={item.image}
+          target="_blank"
+          rel="noreferrer"
+          className="grid grid-cols-[72px_1fr] gap-3 rounded-lg border border-white/10 bg-white/5 p-3 hover:bg-white/10"
+        >
+          <img src={item.image} alt={item.eventName} className="h-16 w-16 rounded-md object-cover" />
+          <div>
+            <div className="text-sm font-medium text-white">{item.eventName}</div>
+            <div className="mt-0.5 text-xs text-white/50">
+              {item.genre}{item.attendees ? ` · ${item.attendees} attendees` : ""}
+            </div>
+            <p className="mt-1 line-clamp-2 text-xs text-white/60">{item.about}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+)}
+               
+               
+               
+               
                 <div>
                   <label className="text-white/40 text-xs uppercase tracking-wider block mb-2">Admin Notes (optional)</label>
                   <textarea value={adminNotes} onChange={e => setAdminNotes(e.target.value)} rows={3} placeholder="Reason for approval/rejection…" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm placeholder:text-white/20 focus:outline-none focus:border-violet-500 resize-none" />

@@ -23,3 +23,4 @@ export * from './listListingsType';
 export * from './partnerApplicationInput';
 export * from './partnerApplicationInputType';
 export * from './platformStats';
+export * from './portfolioItem';

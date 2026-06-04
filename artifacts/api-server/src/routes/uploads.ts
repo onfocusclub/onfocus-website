@@ -133,9 +133,15 @@ router.post(
 
       res.status(201).json({ media });
     } catch (err) {
-      console.error("Upload error:", err);
-      res.status(500).json({ error: "Failed to upload media" });
-    }
+  console.error("Upload error:", err);
+
+  const message =
+    err instanceof Error && err.name === "TimeoutError"
+      ? "Upload timed out. Please try a smaller file or check your internet connection."
+      : "Failed to upload media. Please check the file size and try again.";
+
+  res.status(500).json({ error: message });
+}
   },
 );
 

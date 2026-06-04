@@ -207,6 +207,25 @@ components:
       required:
         - status
 
+    PortfolioItem:
+      type: object
+      required:
+        - image
+        - eventName
+        - about
+        - genre
+      properties:
+        image:
+          type: string
+        eventName:
+          type: string
+        about:
+          type: string
+        genre:
+          type: string
+        attendees:
+          type: ["integer", "null"]
+
     Listing:
       type: object
       required:
@@ -223,9 +242,11 @@ components:
         - images
         - videoUrls
         - mediaMetadata
+        - portfolioItems
         - tags
         - verified
         - featured
+        
       properties:
         id:
           type: integer
@@ -259,6 +280,10 @@ components:
         mediaMetadata:
           type: object
           additionalProperties: true
+        portfolioItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/PortfolioItem"
         tags:
           type: array
           items:
@@ -442,6 +467,10 @@ components:
           type: string
         website:
           type: string
+        portfolioItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/PortfolioItem"
 
     InquiryConfirmation:
       type: object

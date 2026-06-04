@@ -7,6 +7,7 @@
  */
 import type { ListingMediaMetadata } from './listingMediaMetadata';
 import type { ListingType } from './listingType';
+import type { PortfolioItem } from './portfolioItem';
 
 export interface Listing {
   id: number;
@@ -23,6 +24,7 @@ export interface Listing {
   images: string[];
   videoUrls: string[];
   mediaMetadata: ListingMediaMetadata;
+  portfolioItems: PortfolioItem[];
   tags: string[];
   verified: boolean;
   featured: boolean;

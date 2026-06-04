@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { PartnerApplicationInputType } from './partnerApplicationInputType';
+import type { PortfolioItem } from './portfolioItem';
 
 export interface PartnerApplicationInput {
   name: string;
@@ -16,4 +17,5 @@ export interface PartnerApplicationInput {
   city: string;
   description: string;
   website?: string;
+  portfolioItems?: PortfolioItem[];
 }

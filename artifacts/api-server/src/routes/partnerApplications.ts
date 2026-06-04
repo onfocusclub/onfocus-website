@@ -15,6 +15,34 @@ function toNullableNumber(value: unknown): number | null {
   return Number.isFinite(numberValue) ? numberValue : null;
 }
 
+function toPortfolioItems(value: unknown) {
+  if (typeof value === "string") {
+    try {
+      return toPortfolioItems(JSON.parse(value));
+    } catch {
+      return [];
+    }
+  }
+
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+
+      const raw = item as Record<string, unknown>;
+
+      return {
+        image: String(raw.image ?? "").trim(),
+        eventName: String(raw.eventName ?? "").trim(),
+        about: String(raw.about ?? "").trim(),
+        genre: String(raw.genre ?? "").trim(),
+        attendees: toNullableNumber(raw.attendees),
+      };
+    })
+   .filter((item) => item && item.image && item.eventName && item.about && item.genre);
+}
+
 function firstImage(urls: string[]) {
   return urls.find((url) => /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url)) ?? urls[0] ?? "";
 }
@@ -41,7 +69,8 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
   profileImage,
   galleryUrls,
   videoUrls,
-  mediaMetadata,
+   mediaMetadata,
+  portfolioItems,
 } = req.body;
 
   if (!partnerType || !businessName || !email || !city || !category || !description) {
@@ -56,9 +85,9 @@ return;
           name, email, phone, type, category, city, description, website,
           price_range, portfolio_urls, years_active, events_completed,
 capacity, tags, amenities, cover_image, profile_image,
-gallery_urls, video_urls, media_metadata, status, submitted_at
+gallery_urls, video_urls, media_metadata, portfolio_items, status, submitted_at
         )
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,'pending',NOW())
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,'pending',NOW())
        RETURNING *`,
       [
         businessName,
@@ -80,7 +109,8 @@ gallery_urls, video_urls, media_metadata, status, submitted_at
 profileImage ?? null,
 toStringArray(galleryUrls),
 toStringArray(videoUrls),
-mediaMetadata ?? {},
+typeof mediaMetadata === "string" ? JSON.parse(mediaMetadata) : (mediaMetadata ?? {}),
+JSON.stringify(toPortfolioItems(portfolioItems)),
       ]
     );
 
@@ -176,15 +206,15 @@ const fallbackMediaUrls = toStringArray(application.portfolio_urls);
 const listingImages = galleryUrls.length > 0 ? galleryUrls : fallbackMediaUrls;
 const coverImage = application.cover_image ?? firstImage(listingImages);
 
-      await client.query(
+            await client.query(
         `INSERT INTO listings
           (
             type, name, category, city, rating, review_count, bio,
-           cover_image, profile_image, images, video_urls, media_metadata,
-tags, verified, featured, years_active, events_completed,
-price_range, capacity, amenities
+            cover_image, profile_image, images, video_urls, media_metadata,
+            portfolio_items, tags, verified, featured, years_active, events_completed,
+            price_range, capacity, amenities
           )
-VALUES ($1,$2,$3,$4,4.5,0,$5,$6,$7,$8,$9,$10,true,false,$11,$12,$13,$14,$15)
+         VALUES ($1,$2,$3,$4,4.5,0,$5,$6,$7,$8,$9,$10,$11,$12,true,false,$13,$14,$15,$16,$17)
          ON CONFLICT DO NOTHING`,
         [
           application.type,
@@ -192,17 +222,18 @@ VALUES ($1,$2,$3,$4,4.5,0,$5,$6,$7,$8,$9,$10,true,false,$11,$12,$13,$14,$15)
           application.category,
           application.city,
           application.description,
-coverImage,
-application.profile_image ?? null,
-listingImages,
-toStringArray(application.video_urls),
-application.media_metadata ?? {},
-toStringArray(application.tags),
-application.years_active,
-application.events_completed,
-application.price_range,
-application.capacity,
-toStringArray(application.amenities),
+          coverImage,
+          application.profile_image ?? null,
+          listingImages,
+          toStringArray(application.video_urls),
+          application.media_metadata ?? {},
+          JSON.stringify(toPortfolioItems(application.portfolio_items)),
+          toStringArray(application.tags),
+          application.years_active,
+          application.events_completed,
+          application.price_range,
+          application.capacity,
+          toStringArray(application.amenities),
         ]
       );
     }

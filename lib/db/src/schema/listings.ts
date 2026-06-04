@@ -2,6 +2,13 @@ import { pgTable, text, serial, integer, real, boolean, timestamp, jsonb } from 
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
+type PortfolioItem = {
+  image: string;
+  eventName: string;
+  about: string;
+  genre: string;
+  attendees?: number | null;
+};
 export const listingsTable = pgTable("listings", {
   id: serial("id").primaryKey(),
   type: text("type").notNull(), // artist | vendor | venue
@@ -14,8 +21,9 @@ export const listingsTable = pgTable("listings", {
   coverImage: text("cover_image").notNull().default(""),
   profileImage: text("profile_image"),
   images: text("images").array().notNull().default([]),
-  videoUrls: text("video_urls").array().notNull().default([]),
+   videoUrls: text("video_urls").array().notNull().default([]),
   mediaMetadata: jsonb("media_metadata").$type<Record<string, unknown>>().notNull().default({}),
+  portfolioItems: jsonb("portfolio_items").$type<PortfolioItem[]>().notNull().default([]),
   tags: text("tags").array().notNull().default([]),
   verified: boolean("verified").notNull().default(false),
   featured: boolean("featured").notNull().default(false),

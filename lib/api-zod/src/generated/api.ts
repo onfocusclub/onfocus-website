@@ -49,6 +49,13 @@ export const ListListingsResponse = zod.object({
   "images": zod.array(zod.string()),
   "videoUrls": zod.array(zod.string()),
   "mediaMetadata": zod.record(zod.string(), zod.unknown()),
+  "portfolioItems": zod.array(zod.object({
+  "image": zod.string(),
+  "eventName": zod.string(),
+  "about": zod.string(),
+  "genre": zod.string(),
+  "attendees": zod.number().nullish()
+})),
   "tags": zod.array(zod.string()),
   "verified": zod.boolean(),
   "featured": zod.boolean(),
@@ -100,6 +107,13 @@ export const GetListingResponse = zod.object({
   "images": zod.array(zod.string()),
   "videoUrls": zod.array(zod.string()),
   "mediaMetadata": zod.record(zod.string(), zod.unknown()),
+  "portfolioItems": zod.array(zod.object({
+  "image": zod.string(),
+  "eventName": zod.string(),
+  "about": zod.string(),
+  "genre": zod.string(),
+  "attendees": zod.number().nullish()
+})),
   "tags": zod.array(zod.string()),
   "verified": zod.boolean(),
   "featured": zod.boolean(),
@@ -130,6 +144,13 @@ export const GetFeaturedListingsResponse = zod.object({
   "images": zod.array(zod.string()),
   "videoUrls": zod.array(zod.string()),
   "mediaMetadata": zod.record(zod.string(), zod.unknown()),
+  "portfolioItems": zod.array(zod.object({
+  "image": zod.string(),
+  "eventName": zod.string(),
+  "about": zod.string(),
+  "genre": zod.string(),
+  "attendees": zod.number().nullish()
+})),
   "tags": zod.array(zod.string()),
   "verified": zod.boolean(),
   "featured": zod.boolean(),
@@ -153,6 +174,13 @@ export const GetFeaturedListingsResponse = zod.object({
   "images": zod.array(zod.string()),
   "videoUrls": zod.array(zod.string()),
   "mediaMetadata": zod.record(zod.string(), zod.unknown()),
+  "portfolioItems": zod.array(zod.object({
+  "image": zod.string(),
+  "eventName": zod.string(),
+  "about": zod.string(),
+  "genre": zod.string(),
+  "attendees": zod.number().nullish()
+})),
   "tags": zod.array(zod.string()),
   "verified": zod.boolean(),
   "featured": zod.boolean(),
@@ -176,6 +204,13 @@ export const GetFeaturedListingsResponse = zod.object({
   "images": zod.array(zod.string()),
   "videoUrls": zod.array(zod.string()),
   "mediaMetadata": zod.record(zod.string(), zod.unknown()),
+  "portfolioItems": zod.array(zod.object({
+  "image": zod.string(),
+  "eventName": zod.string(),
+  "about": zod.string(),
+  "genre": zod.string(),
+  "attendees": zod.number().nullish()
+})),
   "tags": zod.array(zod.string()),
   "verified": zod.boolean(),
   "featured": zod.boolean(),
@@ -244,7 +279,14 @@ export const SubmitPartnerApplicationBody = zod.object({
   "category": zod.string(),
   "city": zod.string(),
   "description": zod.string(),
-  "website": zod.string().optional()
+  "website": zod.string().optional(),
+  "portfolioItems": zod.array(zod.object({
+  "image": zod.string(),
+  "eventName": zod.string(),
+  "about": zod.string(),
+  "genre": zod.string(),
+  "attendees": zod.number().nullish()
+})).optional()
 })
 
 
