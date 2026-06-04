@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
-import { Menu, Search, ChevronDown, LayoutDashboard, Bookmark, LogOut, Briefcase } from "lucide-react";
+import { Menu, ChevronDown, LayoutDashboard, Bookmark, LogOut, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import {
@@ -104,7 +104,7 @@ function UserDropdown() {
 }
 
 export function Navbar() {
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { user, openModal } = useAuth();
@@ -246,15 +246,7 @@ export function Navbar() {
 
         {/* Right side — desktop */}
         <div className="hidden lg:flex items-center gap-4">
-          <Button
-             variant="ghost"
-             size="icon"
-             className="rounded-full text-foreground hover:bg-muted"
-             onClick={() => navigate("/explore")}
-             data-testid="button-nav-search"
->
-          <Search className="w-5 h-5" />
-         </Button>
+          
           <Link href="/explore" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-nav-explore">
             Explore
           </Link>

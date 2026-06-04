@@ -190,6 +190,18 @@ const cityMatches = cityFilter.trim()
             ))}
           </div>
 
+          <div className="relative w-full md:w-80 shrink-0">
+  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+  <Input 
+    placeholder="Search by name or city" 
+    className="pl-11 rounded-full border-border bg-transparent focus-visible:ring-foreground h-11"
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    data-testid="input-search-vendors"
+  />
+</div>
+</div>
+
                   <div className="flex flex-col sm:flex-row gap-3 mb-10 p-4 rounded-2xl bg-muted/40 border border-border/60">
           <div className="relative flex-1 min-w-0">
             <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 px-1">
@@ -282,17 +294,7 @@ const cityMatches = cityFilter.trim()
           )}
         </div>
 
-          <div className="relative w-full md:w-80 shrink-0">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search by name or city" 
-              className="pl-11 rounded-full border-border bg-transparent focus-visible:ring-foreground h-11"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              data-testid="input-search-vendors"
-            />
-          </div>
-        </div>
+        
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {isLoading ? (

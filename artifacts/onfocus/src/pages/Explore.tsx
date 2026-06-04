@@ -1,13 +1,65 @@
+import { useState } from "react";
 import { useListCategories } from "@workspace/api-client-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 
+
+const SEARCH_OPTIONS = [
+ { label: "Singer", type: "artist", aliases: ["singer", "singers", "singing", "vocalist", "vocalists", "bollywood singer", "bollywood singers"] },
+{ label: "DJ", type: "artist", aliases: ["dj", "djs", "disc jockey", "disc jockeys"] },
+{ label: "Band", type: "artist", aliases: ["band", "bands", "live band", "live bands", "musician", "musicians"] },
+{ label: "Anchor", type: "artist", aliases: ["anchor", "anchors", "host", "hosts", "emcee", "emcees"] },
+{ label: "Dancer", type: "artist", aliases: ["dancer", "dancers", "dance", "classical dancer", "classical dancers", "bollywood dancer", "bollywood dancers"] },
+  { label: "Photographer", type: "vendor", aliases: ["photography", "photographer", "photographers", "photo", "photos"] },
+{ label: "Makeup Artist", type: "vendor", aliases: ["makeup", "makeup artist", "makeup artists", "mua"] },
+{ label: "Catering", type: "vendor", aliases: ["catering", "caterer", "caterers", "food"] },
+{ label: "Lighting & Decor", type: "vendor", aliases: ["decor", "decoration", "decorator", "decorators", "lighting", "lights"] },
+{ label: "Banquet Hall", type: "venue", aliases: ["venue", "venues", "banquet", "banquets", "hall", "halls", "banquet hall", "banquet halls"] },
+{ label: "Rooftop Venue", type: "venue", aliases: ["rooftop", "rooftops", "terrace", "terraces", "rooftop venue", "rooftop venues"] },
+{ label: "Garden / Lawn", type: "venue", aliases: ["lawn", "lawns", "garden", "gardens", "garden venue", "garden venues"] },
+] as const;
+
 export function Explore() {
   const { data, isLoading } = useListCategories();
- const searchParams = new URLSearchParams(window.location.search);
-const requestedQuery = searchParams.get("query")?.trim();
+  const [, navigate] = useLocation();
+  const searchParams = new URLSearchParams(window.location.search);
+  const requestedQuery = searchParams.get("query")?.trim();
+  const [searchQuery, setSearchQuery] = useState(requestedQuery ?? "");
+
+  const handleExploreSearch = () => {
+    const typedSearch = searchQuery.trim();
+
+    if (!typedSearch) {
+      navigate("/explore");
+      return;
+    }
+
+    const normalizedSearch = typedSearch.toLowerCase();
+    const singularSearch = normalizedSearch.endsWith("s")
+  ? normalizedSearch.slice(0, -1)
+  : normalizedSearch;
+    const matchedOption = SEARCH_OPTIONS.find((option) =>
+      [option.label, ...option.aliases].some(
+        (value) => {
+  const normalizedValue = value.toLowerCase();
+  return normalizedValue === normalizedSearch || normalizedValue === singularSearch;
+}
+      )
+    );
+
+    if (matchedOption) {
+      navigate(`/${matchedOption.type}s?category=${encodeURIComponent(matchedOption.label)}`);
+      return;
+    }
+
+    navigate(`/explore?query=${encodeURIComponent(typedSearch)}`);
+  };
+
   return (
     <div className="min-h-screen bg-background pt-32 pb-32">
       <div className="container mx-auto px-6 md:px-8 max-w-5xl">
@@ -16,6 +68,31 @@ const requestedQuery = searchParams.get("query")?.trim();
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed" data-testid="text-explore-subheading">
             Browse our comprehensive directory of creative professionals and venues.
           </p>
+        </div>
+
+                <div className="mx-auto mb-10 flex max-w-2xl flex-col gap-3 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleExploreSearch();
+                }
+              }}
+              placeholder="Search artists, vendors, venues..."
+              className="h-12 rounded-full border-border bg-white pl-11 text-base focus-visible:ring-foreground"
+              data-testid="input-explore-search"
+            />
+          </div>
+          <Button
+            className="h-12 rounded-full px-8 font-semibold"
+            onClick={handleExploreSearch}
+            data-testid="button-explore-search"
+          >
+            Search
+          </Button>
         </div>
 
         {requestedQuery && (
