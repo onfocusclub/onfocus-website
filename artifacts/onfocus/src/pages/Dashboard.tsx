@@ -144,26 +144,26 @@ const isAdmin = ADMIN_EMAILS.includes(user?.email ?? "");
             {/* Profile card */}
             <SectionCard>
               <div className="flex items-center gap-4 mb-6">
-                {partnerListing?.profileImage ? (
-                  <img src={partnerListing.profileImage} alt={user.name} className="w-14 h-14 rounded-full object-cover shrink-0" />
-                ) : (
-                  <div className="w-14 h-14 rounded-full bg-foreground text-background flex items-center justify-center text-lg font-bold shrink-0">
-                    {initials}
-                  </div>
-                )}
+                {partnerListing?.profileImage && !isAdmin ? (
+  <img src={partnerListing.profileImage} alt={user.name} className="w-14 h-14 rounded-full object-cover shrink-0" />
+) : (
+  <div className="w-14 h-14 rounded-full bg-foreground text-background flex items-center justify-center text-lg font-bold shrink-0">
+    {initials}
+  </div>
+)}
                 <div className="min-w-0">
                   <p className="font-semibold text-foreground truncate">{user.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   <div className="flex gap-2 mt-1">
-                    <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-muted rounded-full text-muted-foreground">
-                      {user.provider}
-                    </span>
-                    {partnerListing && (
-                      <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
-                        Partner ✓
-                      </span>
-                    )}
-                  </div>
+  <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-muted rounded-full text-muted-foreground">
+    {user.provider}
+  </span>
+  {partnerListing && !isAdmin && (
+    <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
+      Partner ✓
+    </span>
+  )}
+</div>
                 </div>
               </div>
             </SectionCard>
