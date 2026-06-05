@@ -1,4 +1,6 @@
-import { useState, type ChangeEvent } from "react";
+import { useState, useEffect, type ChangeEvent } from "react";
+import { useParams } from "wouter";
+import { useAuth } from "@/context/AuthContext";
 import { Music, Camera, Building2, ChevronRight, Check, ArrowLeft, Upload, X, Image as ImageIcon, Video } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -80,9 +82,50 @@ function splitLines(value: string) {
     .filter(Boolean);
 }
 export function Join() {
+  const { user, openModal } = useAuth();
+  const params = useParams<{ id?: string }>();
+const editId = params?.id ? Number(params.id) : null;
+const isEditMode = Boolean(editId);
+const [isLoadingEdit, setIsLoadingEdit] = useState(false);
   const [step, setStep] = useState(0);
   const [type, setType] = useState<ListingType | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  useEffect(() => {
+  if (!editId) return;
+  setIsLoadingEdit(true);
+
+  fetch(`${API_BASE}/api/partner-applications/${editId}`)
+    .then(res => res.json())
+    .then(data => {
+      // Pre-fill type
+      if (data.type) setType(data.type as ListingType);
+
+      // Pre-fill form fields
+      setForm({
+        name:            data.name          ?? "",
+        email:           data.email         ?? "",
+        phone:           data.phone         ?? "",
+        city:            data.city          ?? "",
+        category:        data.category      ?? "",
+        bio:             data.description   ?? "",
+        priceRange:      data.price_range   ?? "",
+        yearsActive:     data.years_active  ? String(data.years_active)  : "",
+        eventsCompleted: data.events_completed ? String(data.events_completed) : "",
+        capacity:        data.capacity      ? String(data.capacity)      : "",
+        website:         data.website       ?? "",
+        tags:            Array.isArray(data.tags) ? data.tags.join("\n") : "",
+        amenities:       Array.isArray(data.amenities) ? data.amenities.join("\n") : "",
+      });
+
+      // Skip to step 1 so they don't have to re-pick type
+      setStep(1);
+    })
+    .catch(err => {
+      console.error("Failed to load application:", err);
+      alert("Could not load your application. Please try again.");
+    })
+    .finally(() => setIsLoadingEdit(false));
+}, [editId]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [coverImage, setCoverImage] = useState<MediaSlot | null>(null);
   const [profileImage, setProfileImage] = useState<MediaSlot | null>(null);
@@ -290,40 +333,43 @@ const portfolioItems = galleryImages
  setIsSubmitting(true);
   try {
     // 1. Save to your Neon DB via backend
-    const apiRes = await fetch(`${API_BASE}/api/partner-applications`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    partnerType: type,
-    businessName: form.name,
-    contactName: form.name,
-    email: form.email,
-    phone: form.phone || null,
-    city: form.city,
-    category: form.category,
-    description: form.bio,
-    priceRange: form.priceRange || null,
-    yearsActive: form.yearsActive ? Number(form.yearsActive) : null,
-    eventsCompleted: form.eventsCompleted ? Number(form.eventsCompleted) : null,
-    capacity: form.capacity ? Number(form.capacity) : null,
-    tags,
-    amenities,
-  coverImage: coverImage?.uploaded?.url,
-  profileImage: profileImage?.uploaded?.url,
-  galleryUrls: uploadedGalleryUrls,
-  videoUrls: uploadedVideoUrls,
-  mediaMetadata: {
-    coverImage: coverImage?.uploaded ?? null,
-    profileImage: profileImage?.uploaded ?? null,
-    galleryImages: galleryImages.map((item) => item.uploaded).filter(Boolean),
-    videos: videos.map((item) => item.uploaded).filter(Boolean),
-   
-},
-portfolioUrls: uploadedGalleryUrls,
-portfolioItems,
-    website: form.website || null,
-  }),
-});
+   const apiRes = await fetch(
+  isEditMode
+    ? `${API_BASE}/api/partner-applications/${editId}`
+    : `${API_BASE}/api/partner-applications`,
+  {
+    method: isEditMode ? "PATCH" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      partnerType:     type,
+      businessName:    form.name,
+      email:           form.email,
+      phone:           form.phone || null,
+      city:            form.city,
+      category:        form.category,
+      description:     form.bio,
+      priceRange:      form.priceRange || null,
+      yearsActive:     form.yearsActive     ? Number(form.yearsActive)     : null,
+      eventsCompleted: form.eventsCompleted ? Number(form.eventsCompleted) : null,
+      capacity:        form.capacity        ? Number(form.capacity)        : null,
+      tags,
+      amenities,
+      coverImage:      coverImage?.uploaded?.url   ?? null,
+      profileImage:    profileImage?.uploaded?.url ?? null,
+      galleryUrls:     uploadedGalleryUrls,
+      videoUrls:       uploadedVideoUrls,
+      mediaMetadata: {
+        coverImage:    coverImage?.uploaded   ?? null,
+        profileImage:  profileImage?.uploaded ?? null,
+        galleryImages: galleryImages.map(i => i.uploaded).filter(Boolean),
+        videos:        videos.map(i => i.uploaded).filter(Boolean),
+      },
+      portfolioUrls:  uploadedGalleryUrls,
+      portfolioItems,
+      website:        form.website || null,
+    }),
+  }
+);
 
     if (!apiRes.ok) {
       const err = await apiRes.json();
@@ -356,6 +402,31 @@ portfolioItems,
 
   const config = type ? TYPE_CONFIG[type] : null;
 
+  if (isLoadingEdit) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-muted-foreground text-sm">Loading your application...</p>
+    </div>
+  );
+}
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+            <span className="text-2xl">🔒</span>
+          </div>
+          <h2 className="text-2xl font-bold mb-3">Login Required</h2>
+          <p className="text-muted-foreground mb-8">Please sign in to apply as a partner on OnFocus.</p>
+          <Button size="lg" className="rounded-full px-10 h-14 font-semibold" onClick={openModal}>
+            Sign In to Continue
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -363,10 +434,14 @@ portfolioItems,
           <div className="w-20 h-20 bg-foreground text-background rounded-full flex items-center justify-center mx-auto mb-8">
             <Check className="w-10 h-10" />
           </div>
-          <h2 className="text-3xl font-bold mb-4">Application Received!</h2>
-          <p className="text-muted-foreground mb-8 leading-relaxed">
-            Thank you for applying to OnFocus. Our team will review your application and get back to you within 3-5 business days.
-          </p>
+          <h2 className="text-3xl font-bold mb-4">
+  {isEditMode ? "Application Updated!" : "Application Received!"}
+</h2>
+<p className="text-muted-foreground mb-8 leading-relaxed">
+  {isEditMode
+    ? "Your application has been updated and is back under review. We'll get back to you within 3-5 business days."
+    : "Thank you for applying to OnFocus. Our team will review your application and get back to you within 3-5 business days."}
+</p>
           <Button size="lg" className="rounded-full px-10 h-14 font-semibold" asChild>
             <Link href="/">Return to Home</Link>
           </Button>

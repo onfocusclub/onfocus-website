@@ -124,23 +124,32 @@ JSON.stringify(toPortfolioItems(portfolioItems)),
 // GET /api/partner-applications
 router.get("/", async (req: Request, res: Response) => {
   const status = req.query.status as string | undefined;
+  const email = req.query.email as string | undefined;
   const page = parseInt((req.query.page as string) ?? "1", 10);
   const limit = parseInt((req.query.limit as string) ?? "20", 10);
   const offset = (page - 1) * limit;
 
   try {
+    const whereParts: string[] = [];
+    const queryParams: unknown[] = [];
+
+    if (status) { whereParts.push(`status=$${queryParams.length + 1}`); queryParams.push(status); }
+    if (email) { whereParts.push(`email=$${queryParams.length + 1}`); queryParams.push(email); }
+
+    const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(" AND ")}` : "";
+
     const countResult = await pool.query(
-      `SELECT COUNT(*) FROM partner_applications ${status ? "WHERE status=$1" : ""}`,
-      status ? [status] : []
+      `SELECT COUNT(*) FROM partner_applications ${whereClause}`,
+      queryParams
     );
     const total = parseInt(countResult.rows[0].count, 10);
 
     const dataResult = await pool.query(
       `SELECT * FROM partner_applications
-       ${status ? "WHERE status=$1" : ""}
+       ${whereClause}
        ORDER BY submitted_at DESC NULLS LAST
-       LIMIT ${status ? "$2" : "$1"} OFFSET ${status ? "$3" : "$2"}`,
-      status ? [status, limit, offset] : [limit, offset]
+       LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`,
+      [...queryParams, limit, offset]
     );
 
     res.json({
@@ -246,6 +255,58 @@ const coverImage = application.cover_image ?? firstImage(listingImages);
     res.status(500).json({ error: "Failed to update status" });
   } finally {
     client.release();
+  }
+});
+
+// PATCH /api/partner-applications/:id — edit & resubmit
+router.patch("/:id", async (req: Request, res: Response): Promise<void> => {
+  const {
+    partnerType, businessName, email, phone, city, category,
+    description, priceRange, portfolioUrls, website, yearsActive,
+    eventsCompleted, capacity, tags, amenities, coverImage,
+    profileImage, galleryUrls, videoUrls, mediaMetadata, portfolioItems,
+  } = req.body;
+
+  if (!partnerType || !businessName || !email || !city || !category || !description) {
+    res.status(400).json({ error: "Missing required fields" });
+    return;
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE partner_applications SET
+        name=$1, email=$2, phone=$3, type=$4, category=$5, city=$6,
+        description=$7, website=$8, price_range=$9, portfolio_urls=$10,
+        years_active=$11, events_completed=$12, capacity=$13, tags=$14,
+        amenities=$15, cover_image=$16, profile_image=$17, gallery_urls=$18,
+        video_urls=$19, media_metadata=$20, portfolio_items=$21,
+        status='pending', submitted_at=NOW(), admin_notes=NULL,
+        reviewed_at=NULL, reviewed_by=NULL
+       WHERE id=$22
+       RETURNING *`,
+      [
+        businessName, email, phone ?? null, partnerType, category, city,
+        description, website ?? null, priceRange ?? null,
+        toStringArray(portfolioUrls),
+        toNullableNumber(yearsActive), toNullableNumber(eventsCompleted),
+        toNullableNumber(capacity), toStringArray(tags),
+        toStringArray(amenities), coverImage ?? null, profileImage ?? null,
+        toStringArray(galleryUrls), toStringArray(videoUrls),
+        typeof mediaMetadata === "string" ? JSON.parse(mediaMetadata) : (mediaMetadata ?? {}),
+        JSON.stringify(toPortfolioItems(portfolioItems)),
+        req.params.id,
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error updating application:", err);
+    res.status(500).json({ error: "Failed to update application" });
   }
 });
 

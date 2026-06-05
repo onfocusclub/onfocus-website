@@ -132,6 +132,35 @@ router.post("/listings", async (req, res): Promise<void> => {
   res.status(201).json(GetListingResponse.parse(listing));
 });
 
+router.patch("/listings/:id", async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (!id) { res.status(400).json({ error: "Invalid id" }); return; }
+
+ const { name, bio, priceRange, yearsActive, eventsCompleted, capacity, tags, amenities, coverImage, profileImage, images, portfolioItems } = req.body;
+
+  const [updated] = await db
+    .update(listingsTable)
+    .set({
+      ...(bio !== undefined && { bio }),
+      ...(priceRange !== undefined && { priceRange }),
+      ...(yearsActive !== undefined && { yearsActive }),
+      ...(eventsCompleted !== undefined && { eventsCompleted }),
+      ...(capacity !== undefined && { capacity }),
+      ...(tags !== undefined && { tags }),
+      ...(amenities !== undefined && { amenities }),
+      ...(name !== undefined && { name }),
+      ...(coverImage !== undefined && { coverImage }),
+      ...(profileImage !== undefined && { profileImage }),
+      ...(images !== undefined && { images }),
+      ...(portfolioItems !== undefined && { portfolioItems: JSON.stringify(portfolioItems) }),
+    })
+    .where(eq(listingsTable.id, id))
+    .returning();
+
+  if (!updated) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(normalizeListing(updated));
+});
+
 router.get("/listings/:id", async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = GetListingParams.safeParse({ id: raw });

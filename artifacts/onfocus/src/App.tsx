@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { AuthProvider } from "@/context/AuthContext";
 import { AuthModal } from "@/components/AuthModal";
+import { EditListing } from "@/pages/EditListing";
 
 // Pages
 import { Home } from "@/pages/Home";
@@ -40,7 +41,10 @@ function Router() {
           <Route path="/about" component={About} />
           <Route path="/contact" component={Contact} />
           <Route path="/join" component={Join} />
+          <Route path="/join/edit/:id" component={Join} />
+          <Route path="/join/edit/:id" component={Join} />
           <Route path="/listing/:id" component={ListingProfile} />
+          <Route path="/listing/:id/edit" component={EditListing} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/admin" component={AdminPanel} />
           <Route component={NotFound} />

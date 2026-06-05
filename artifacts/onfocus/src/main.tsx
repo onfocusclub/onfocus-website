@@ -4,7 +4,7 @@ import emailjs from "@emailjs/browser";
 import App from "./App";
 import "./index.css";
 
-emailjs.init("_-_L6Ge-PdjfIGdtO");
-setBaseUrl("http://localhost:3000");
+emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
+setBaseUrl(import.meta.env.VITE_API_URL ?? "http://localhost:3000");
 
 createRoot(document.getElementById("root")!).render(<App />);

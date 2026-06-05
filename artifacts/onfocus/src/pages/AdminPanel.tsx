@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { sendRejectionEmail } from "@/lib/emailjs";
 
 const ADMIN_EMAILS = ["onfocusclub@gmail.com"];
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
@@ -122,7 +123,7 @@ export default function AdminPanel() {
     setDrawerOpen(true);
   }
 
-  async function updateStatus(id: number, status: Status) {
+ async function updateStatus(id: number, status: Status) {
     setActionLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/partner-applications/${id}/status`, {
@@ -134,6 +135,20 @@ export default function AdminPanel() {
       const updated: Application = await res.json();
       setApplications(prev => prev.map(a => a.id === id ? updated : a));
       setSelected(updated);
+
+      // Send rejection email
+      if (status === "rejected") {
+        try {
+          await sendRejectionEmail({
+            name: updated.name,
+            email: updated.email,
+            adminNotes: adminNotes,
+          });
+        } catch (emailErr) {
+          console.error("Rejection email failed:", JSON.stringify(emailErr));
+        }
+      }
+
       showToast(`Application ${status === "approved" ? "approved ✓" : "rejected ✗"}`, status === "approved");
     } catch {
       showToast("Failed to update status", false);
