@@ -279,8 +279,8 @@ export function Dashboard() {
                       Are you an artist, vendor, or venue? Join OnFocus as a partner and get discovered by thousands of people planning events.
                     </p>
                     <Button asChild className="rounded-full px-8 h-11 text-sm font-semibold shadow-none">
-                        <Link href={`/join/edit/${application.id}`}>Apply Again</Link>
-                    </Button>
+  <Link href="/join">Apply Now</Link>
+</Button>
                   </div>
                 </div>
               </SectionCard>
