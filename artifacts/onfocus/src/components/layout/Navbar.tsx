@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 
+const ADMIN_EMAILS = ["onfocusclub@gmail.com"];
 const ARTIST_CATEGORIES = ["Singers", "DJs", "Bands", "Anchors", "Dancers", "Performers"];
 const VENDOR_CATEGORIES = ["Decor", "Catering", "Photography", "Makeup", "Production", "Lighting"];
 const VENUE_CATEGORIES = ["Banquet Halls", "Rooftops", "Luxury Venues", "Open Lawns", "Clubs"];
@@ -71,9 +72,10 @@ function UserDropdown() {
           </div>
 
           {[
-            { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", testId: "link-dropdown-dashboard" },
-            { icon: Bookmark, label: "Saved", href: "/dashboard", testId: "link-dropdown-saved" },
-            { icon: Briefcase, label: "Become a Partner", href: "/join", testId: "link-dropdown-partner" },
+           { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", testId: "link-dropdown-dashboard" },
+{ icon: Bookmark, label: "Saved", href: "/dashboard", testId: "link-dropdown-saved" },
+{ icon: Briefcase, label: "Become a Partner", href: "/join", testId: "link-dropdown-partner" },
+...(ADMIN_EMAILS.includes(user.email ?? "") ? [{ icon: LayoutDashboard, label: "Admin Panel", href: "/admin", testId: "link-dropdown-admin" }] : []),
           ].map(({ icon: Icon, label, href, testId }) => (
             <Link
               key={label}
