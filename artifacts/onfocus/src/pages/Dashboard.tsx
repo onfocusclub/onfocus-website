@@ -63,6 +63,8 @@ export function Dashboard() {
   const [partnerListing, setPartnerListing] = useState<Listing | null>(null);
   const [application, setApplication] = useState<Application | null>(null);
   const [loadingPartner, setLoadingPartner] = useState(true);
+  const ADMIN_EMAILS = ["onfocusclub@gmail.com"];
+const isAdmin = ADMIN_EMAILS.includes(user?.email ?? "");
 
   useEffect(() => {
     if (!user) return;
