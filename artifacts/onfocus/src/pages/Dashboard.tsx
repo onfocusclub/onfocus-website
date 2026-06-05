@@ -67,6 +67,10 @@ export function Dashboard() {
   useEffect(() => {
     if (!user) return;
 
+
+    const ADMIN_EMAILS = ["onfocusclub@gmail.com"];
+const isAdmin = ADMIN_EMAILS.includes(user?.email ?? "");
+
     async function fetchPartnerData() {
       setLoadingPartner(true);
       try {
@@ -189,11 +193,28 @@ export function Dashboard() {
           <div className="lg:col-span-2 space-y-6">
 
             {/* Partner Profile Section */}
-            {loadingPartner ? (
-              <SectionCard>
-                <div className="h-32 flex items-center justify-center text-muted-foreground text-sm">Loading...</div>
-              </SectionCard>
-            ) : partnerListing ? (
+           {loadingPartner ? (
+  <SectionCard>
+    <div className="h-32 flex items-center justify-center text-muted-foreground text-sm">Loading...</div>
+  </SectionCard>
+) : isAdmin ? (
+  <SectionCard>
+    <div className="flex items-start gap-4">
+      <div className="w-11 h-11 rounded-xl bg-foreground flex items-center justify-center shrink-0">
+        <Briefcase className="w-5 h-5 text-background" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-bold text-base text-foreground mb-1">Admin Dashboard</h3>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+          Manage partner applications, approve or reject listings.
+        </p>
+        <Button asChild className="rounded-full px-8 h-11 text-sm font-semibold shadow-none">
+          <Link href="/admin">Go to Admin Panel</Link>
+        </Button>
+      </div>
+    </div>
+  </SectionCard>
+) : partnerListing ? (
               /* Approved Partner View */
               <SectionCard>
                 <div className="flex items-center justify-between mb-6">
