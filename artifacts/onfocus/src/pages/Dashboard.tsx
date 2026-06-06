@@ -144,7 +144,11 @@ const isAdmin = ADMIN_EMAILS.includes(user?.email ?? "");
             {/* Profile card */}
             <SectionCard>
               <div className="flex items-center gap-4 mb-6">
-                {partnerListing?.profileImage && !isAdmin ? (
+                {isAdmin ? (
+  <div className="w-14 h-14 rounded-full overflow-hidden border border-border shrink-0 bg-black">
+    <img src="/logo.png" alt="OnFocus" className="w-full h-full object-contain" />
+  </div>
+) : partnerListing?.profileImage ? (
   <img src={partnerListing.profileImage} alt={user.name} className="w-14 h-14 rounded-full object-cover shrink-0" />
 ) : (
   <div className="w-14 h-14 rounded-full bg-foreground text-background flex items-center justify-center text-lg font-bold shrink-0">
