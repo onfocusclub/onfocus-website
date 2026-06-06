@@ -119,21 +119,23 @@ const TEAM = [
     role: "Co-Founder & CEO",
     focus: "Leadership · Business Development · Growth",
     initials: "AS",
+    photo: "/team/Akanksha Singh.png",
   },
   {
     name: "Raj Kumar",
     role: "Founder & CMO",
     focus: "Vision · Community Building · Artist Relations",
     initials: "RK",
+    photo: "/team/Raj kumar.png",
   },
   {
     name: "Manish Kushwaha",
     role: "Co-Founder & CFO",
     focus: "Finance · Operations · Strategic Partnerships",
     initials: "MK",
+    photo: "/team/Manish Kushwaha.png",
   },
 ];
-
 const FAQS = [
   {
     q: "What is On Focus Club?",
@@ -577,10 +579,15 @@ export function About() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="bg-white/5 border border-white/10 rounded-2xl p-8 flex flex-col items-center text-center hover:bg-white/10 transition-colors"
               >
-                {/* Initials avatar */}
-                <div className="w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-5">
-                  <span className="text-2xl font-bold text-background">{member.initials}</span>
-                </div>
+                {/* Photo avatar */}
+<div className="w-28 h-28 rounded-full overflow-hidden border-2 border-white/20 mb-5 shrink-0">
+  <img
+    src={member.photo}
+    alt={member.name}
+    className="w-full h-full object-cover object-top"
+    style={{ imageRendering: "auto" }}
+  />
+</div>
                 <h3 className="text-xl font-bold text-background mb-1">{member.name}</h3>
                 <p className="text-sm font-semibold text-background/60 mb-4">{member.role}</p>
                 <p className="text-xs text-background/40 leading-relaxed">{member.focus}</p>
