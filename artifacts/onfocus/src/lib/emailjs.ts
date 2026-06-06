@@ -1,5 +1,10 @@
 import emailjs from "@emailjs/browser";
 
+// Initialize EmailJS
+emailjs.init("lAb9elEXbGY_yzd4m");
+
+import emailjs from "@emailjs/browser";
+
 export interface PartnerFormData {
   type: string;
   name: string;
@@ -16,8 +21,8 @@ export interface PartnerFormData {
 
 export async function sendPartnerNotification(data: PartnerFormData) {
   return emailjs.send(
-    import.meta.env.VITE_EMAILJS_SERVICE_ID,
-    import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+    "service_t4a2rrg",
+    "template_4c1op5r",
     {
       Type:        data.type,
       name:        data.name,
@@ -30,7 +35,7 @@ export async function sendPartnerNotification(data: PartnerFormData) {
       website:     data.website     || "Not provided",
       mediaCount:  data.mediaCount,
     },
-    
+    "-_-L6Ge-PdjfIGdtO"
   );
 }
 
@@ -40,13 +45,32 @@ export async function sendRejectionEmail(data: {
   adminNotes: string;
 }) {
   return emailjs.send(
-    import.meta.env.VITE_EMAILJS_SERVICE_ID,
+    "service_t4a2rrg",
     "template_go0h0wd",
     {
       name:            data.name,
       applicant_email: data.email,
       admin_notes:     data.adminNotes || "",
     },
-    
+    "-_-L6Ge-PdjfIGdtO"
+  );
+}
+
+export async function sendContactEmail(data: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}) {
+  return emailjs.send(
+    "service_174i379",
+    "template_hqa1222",
+    {
+      from_name:  data.name,
+      from_email: data.email,
+      subject:    data.subject,
+      message:    data.message,
+    },
+    "lAb9elEXbGY_yzd4m"
   );
 }
