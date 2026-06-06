@@ -19,13 +19,23 @@ const ARTIST_CATEGORIES = ["Singers", "DJs", "Bands", "Anchors", "Dancers", "Per
 const VENDOR_CATEGORIES = ["Decor", "Catering", "Photography", "Makeup", "Production", "Lighting"];
 const VENUE_CATEGORIES = ["Banquet Halls", "Rooftops", "Luxury Venues", "Open Lawns", "Clubs"];
 
-function UserAvatar({ name }: { name: string }) {
+function UserAvatar({ name, email }: { name: string; email?: string }) {
+  const isAdmin = email && ["onfocusclub@gmail.com"].includes(email);
   const initials = name
     .split(" ")
     .map((n) => n[0])
     .slice(0, 2)
     .join("")
     .toUpperCase();
+  
+  if (isAdmin) {
+    return (
+      <div className="w-8 h-8 rounded-full overflow-hidden border border-border">
+        <img src="/logo.png" alt="Admin" className="w-full h-full object-cover rounded-full" />
+      </div>
+    );
+  }
+  
   return (
     <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-semibold select-none">
       {initials}
@@ -57,7 +67,7 @@ function UserDropdown() {
         className="flex items-center gap-2 rounded-full border border-border/60 pl-2 pr-3 py-1.5 hover:bg-muted/60 transition-colors"
         data-testid="button-user-menu"
       >
-        <UserAvatar name={user.name} />
+       <UserAvatar name={user.name} email={user.email ?? ""} />
         <span className="text-sm font-medium text-foreground hidden sm:block max-w-[120px] truncate">
           {user.name.split(" ")[0]}
         </span>
@@ -134,10 +144,10 @@ export function Navbar() {
     <nav className={navClass}>
       <div className="container mx-auto px-6 md:px-8 flex items-center justify-between">
         <div className="flex items-center gap-10">
-          <Link href="/" className="text-2xl font-bold tracking-tight text-foreground" data-testid="link-home-logo">
-            OnFocus
-          </Link>
-
+          <Link href="/" className="flex items-center gap-2" data-testid="link-home-logo">
+  <img src="/logo.png" alt="OnFocus" className="h-9 w-9 object-contain rounded-full" />
+  <span className="text-2xl font-bold tracking-tight text-foreground">OnFocus</span>
+</Link>
           <div className="hidden lg:flex items-center gap-2">
             <Link
               href="/"
@@ -295,9 +305,10 @@ export function Navbar() {
               <SheetDescription className="sr-only">Access site pages and categories</SheetDescription>
               <div className="flex flex-col h-full bg-white">
                 <div className="p-6 border-b border-border/50">
-                  <Link href="/" className="text-2xl font-bold tracking-tight text-foreground" data-testid="link-mobile-home-logo">
-                    OnFocus
-                  </Link>
+                  <Link href="/" className="flex items-center gap-2" data-testid="link-mobile-home-logo">
+  <img src="/logo.png" alt="OnFocus" className="h-8 w-8 object-contain" />
+  <span className="text-2xl font-bold tracking-tight text-foreground">OnFocus</span>
+</Link>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6">
                   <div className="flex flex-col gap-6">
