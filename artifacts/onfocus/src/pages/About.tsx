@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Search, ArrowUpRight, Users, Mic, Music, Laugh } from "lucide-react";
+import { ChevronDown, Search, ArrowUpRight, Users, Mic, Music, Laugh, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 // ─── Photo paths (all go inside public/about/) ───────────────────────────────
 const CONCERT = {
@@ -29,6 +29,25 @@ const COMMUNITY = {
   group2:  "/about/community-group2.jpg",
   group3:  "/about/community-group3.jpg",
 };
+
+const ALL_GALLERY_PHOTOS = [
+  { src: CONCERT.guitarist,      caption: "Raag Festival" },
+  { src: CONCERT.crowd,          caption: "Raag Festival" },
+  { src: CONCERT.performer,      caption: "Raag Festival" },
+  { src: CONCERT.stageGroup,     caption: "Raag Festival" },
+  { src: CONCERT.bwStage,        caption: "Raag Festival" },
+  { src: CONCERT.finale,         caption: "Raag Festival" },
+  { src: OPENMIC.group,          caption: "Open Mic" },
+  { src: OPENMIC.audienceLaugh,  caption: "Open Mic" },
+  { src: OPENMIC.audienceClap,   caption: "Open Mic" },
+  { src: OPENMIC.standup,        caption: "Open Mic" },
+  { src: OPENMIC.poet,           caption: "Open Mic" },
+  { src: OPENMIC.singer,         caption: "Open Mic" },
+  { src: COMMUNITY.session,      caption: "Community Meet" },
+  { src: COMMUNITY.group1,       caption: "Community Meet" },
+  { src: COMMUNITY.group2,       caption: "Community Meet" },
+  { src: COMMUNITY.group3,       caption: "Community Meet" },
+];
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const STATS = [
@@ -153,6 +172,101 @@ const FAQS = [
     a: "Because it's built by event organizers who understand the industry. We don't just list profiles — we actively create opportunities, build communities, and simplify event planning for everyone involved.",
   },
 ];
+
+function PhotoGallery() {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  function openLightbox(i: number) { setLightboxIndex(i); }
+  function closeLightbox() { setLightboxIndex(null); }
+  function prev() { setLightboxIndex(i => i !== null ? (i - 1 + ALL_GALLERY_PHOTOS.length) % ALL_GALLERY_PHOTOS.length : 0); }
+  function next() { setLightboxIndex(i => i !== null ? (i + 1) % ALL_GALLERY_PHOTOS.length : 0); }
+
+  return (
+    <>
+      {/* Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {ALL_GALLERY_PHOTOS.map((photo, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: i * 0.04 }}
+            className="aspect-square rounded-xl overflow-hidden cursor-pointer group relative"
+            onClick={() => openLightbox(i)}
+          >
+            <img
+              src={photo.src}
+              alt={photo.caption}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-end p-3">
+              <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 line-clamp-1">
+                {photo.caption}
+              </span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxIndex !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+            onClick={closeLightbox}
+          >
+            {/* Close */}
+            <button
+              className="absolute top-4 right-4 text-white/70 hover:text-white z-10 bg-white/10 rounded-full p-2"
+              onClick={closeLightbox}
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Prev */}
+            <button
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white z-10 bg-white/10 rounded-full p-3"
+              onClick={(e) => { e.stopPropagation(); prev(); }}
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
+            {/* Image */}
+            <motion.div
+              key={lightboxIndex}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="max-w-4xl max-h-[80vh] w-full flex flex-col items-center gap-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={ALL_GALLERY_PHOTOS[lightboxIndex].src}
+                alt={ALL_GALLERY_PHOTOS[lightboxIndex].caption}
+                className="max-h-[75vh] max-w-full object-contain rounded-xl"
+              />
+              <p className="text-white/60 text-sm">{ALL_GALLERY_PHOTOS[lightboxIndex].caption}</p>
+              <p className="text-white/30 text-xs">{lightboxIndex + 1} / {ALL_GALLERY_PHOTOS.length}</p>
+            </motion.div>
+
+            {/* Next */}
+            <button
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white z-10 bg-white/10 rounded-full p-3"
+              onClick={(e) => { e.stopPropagation(); next(); }}
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -428,27 +542,16 @@ export function About() {
             ))}
           </div>
 
-          {/* Wide mosaic strip below */}
-          <div className="mt-8 grid grid-cols-3 md:grid-cols-5 gap-3">
-            {[
-              CONCERT.guitarist,
-              OPENMIC.audienceClap,
-              CONCERT.bwStage,
-              COMMUNITY.group2,
-              OPENMIC.poet,
-            ].map((src, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.06 }}
-                className="aspect-square rounded-xl overflow-hidden"
-              >
-                <img src={src} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-              </motion.div>
-            ))}
-          </div>
+          {/* Full Photo Gallery with Lightbox */}
+<div className="mt-16">
+  <div className="text-center mb-8">
+    <span className="text-xs font-bold tracking-[0.2em] uppercase text-muted-foreground mb-2 block">
+      Photo Gallery
+    </span>
+    <h3 className="text-2xl font-bold text-foreground">Moments we've captured</h3>
+  </div>
+  <PhotoGallery />
+</div>
         </div>
       </section>
 
