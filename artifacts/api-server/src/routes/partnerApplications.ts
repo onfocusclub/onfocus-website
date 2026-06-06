@@ -215,36 +215,37 @@ const fallbackMediaUrls = toStringArray(application.portfolio_urls);
 const listingImages = galleryUrls.length > 0 ? galleryUrls : fallbackMediaUrls;
 const coverImage = application.cover_image ?? firstImage(listingImages);
 
-            await client.query(
-        `INSERT INTO listings
-          (
-            type, name, category, city, rating, review_count, bio,
-            cover_image, profile_image, images, video_urls, media_metadata,
-            portfolio_items, tags, verified, featured, years_active, events_completed,
-            price_range, capacity, amenities
-          )
-         VALUES ($1,$2,$3,$4,4.5,0,$5,$6,$7,$8,$9,$10,$11,$12,true,false,$13,$14,$15,$16,$17)
-         ON CONFLICT DO NOTHING`,
-        [
-          application.type,
-          application.name,
-          application.category,
-          application.city,
-          application.description,
-          coverImage,
-          application.profile_image ?? null,
-          listingImages,
-          toStringArray(application.video_urls),
-          application.media_metadata ?? {},
-          JSON.stringify(toPortfolioItems(application.portfolio_items)),
-          toStringArray(application.tags),
-          application.years_active,
-          application.events_completed,
-          application.price_range,
-          application.capacity,
-          toStringArray(application.amenities),
-        ]
-      );
+           await client.query(
+  `INSERT INTO listings
+    (
+      type, name, category, city, rating, review_count, bio,
+      cover_image, profile_image, images, video_urls, media_metadata,
+      portfolio_items, tags, verified, featured, years_active, events_completed,
+      price_range, capacity, amenities, email
+    )
+   VALUES ($1,$2,$3,$4,4.5,0,$5,$6,$7,$8,$9,$10,$11,$12,true,false,$13,$14,$15,$16,$17,$18)
+   ON CONFLICT DO NOTHING`,
+  [
+    application.type,
+    application.name,
+    application.category,
+    application.city,
+    application.description,
+    coverImage,
+    application.profile_image ?? null,
+    listingImages,
+    toStringArray(application.video_urls),
+    application.media_metadata ?? {},
+    JSON.stringify(toPortfolioItems(application.portfolio_items)),
+    toStringArray(application.tags),
+    application.years_active,
+    application.events_completed,
+    application.price_range,
+    application.capacity,
+    toStringArray(application.amenities),
+    application.email,
+  ]
+);
     }
 
     await client.query("COMMIT");

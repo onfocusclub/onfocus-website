@@ -68,6 +68,36 @@ router.get("/listings/stats", async (_req, res): Promise<void> => {
 });
 
 router.get("/listings", async (req, res): Promise<void> => {
+  // Email filter — bypass Drizzle for this
+  const emailFilter = req.query.email as string | undefined;
+  if (emailFilter) {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const result = await pool.query(
+      `SELECT * FROM listings WHERE email = $1 LIMIT 5`,
+      [emailFilter]
+    );
+    await pool.end();
+    res.json({
+      listings: result.rows.map(row => ({
+        ...row,
+        portfolioItems: Array.isArray(row.portfolio_items) ? row.portfolio_items : [],
+        coverImage: row.cover_image,
+        profileImage: row.profile_image,
+        reviewCount: row.review_count,
+        yearsActive: row.years_active,
+        eventsCompleted: row.events_completed,
+        priceRange: row.price_range,
+        videoUrls: row.video_urls ?? [],
+        mediaMetadata: row.media_metadata ?? {},
+      })),
+      total: result.rows.length,
+      limit: 5,
+      offset: 0,
+    });
+    return;
+  }
+
   const query = ListListingsQueryParams.safeParse(req.query);
   if (!query.success) {
     res.status(400).json({ error: query.error.message });
