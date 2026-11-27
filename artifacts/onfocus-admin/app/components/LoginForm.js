@@ -4,8 +4,8 @@ import { useState } from "react";
 import { adminLogin } from "../lib/api";
 
 export default function LoginForm({ onLoginSuccess }) {
-  const [identifier, setIdentifier] = useState("onfocusclub@gmail.com");
-  const [password, setPassword] = useState("admin123");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -28,11 +28,6 @@ export default function LoginForm({ onLoginSuccess }) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickDemo = () => {
-    setIdentifier("onfocusclub@gmail.com");
-    setPassword("admin123");
   };
 
   return (
@@ -70,7 +65,7 @@ export default function LoginForm({ onLoginSuccess }) {
                 required
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="onfocusclub@gmail.com"
+                placeholder="admin@onfocus.club"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-white text-zinc-900 text-sm focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 focus:outline-none transition-all placeholder:text-zinc-400"
               />
             </div>
@@ -106,18 +101,6 @@ export default function LoginForm({ onLoginSuccess }) {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Helper */}
-          <div className="mt-6 pt-5 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-500">
-            <span>Default: onfocusclub@gmail.com</span>
-            <button
-              type="button"
-              onClick={handleQuickDemo}
-              className="font-medium text-zinc-900 hover:underline"
-            >
-              Fill Credentials
-            </button>
-          </div>
         </div>
 
         <div className="text-center text-xs text-zinc-400 mt-6">
