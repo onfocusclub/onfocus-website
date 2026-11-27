@@ -239,6 +239,14 @@ export function Navbar() {
               </NavigationMenuList>
             </NavigationMenu>
 
+            <a
+              href="/#events"
+              className="text-sm font-medium transition-colors hover:text-foreground px-4 py-2 rounded-md text-muted-foreground"
+              data-testid="link-nav-events"
+            >
+              Live Events
+            </a>
+
             <Link
               href="/about"
               className={cn("text-sm font-medium transition-colors hover:text-foreground px-4 py-2 rounded-md", location === "/about" ? "text-foreground" : "text-muted-foreground")}
@@ -343,6 +351,7 @@ export function Navbar() {
                         ))}
                       </div>
                     </div>
+                    <a href="/#events" onClick={() => setIsOpen(false)} className="text-xl font-medium" data-testid="link-mobile-nav-events">Live Events</a>
                     <Link href="/explore" className="text-xl font-medium" data-testid="link-mobile-nav-explore">Explore All</Link>
                     <Link href="/about" className="text-xl font-medium" data-testid="link-mobile-nav-about">About Us</Link>
                     <Link href="/contact" className="text-xl font-medium" data-testid="link-mobile-nav-contact">Contact</Link>

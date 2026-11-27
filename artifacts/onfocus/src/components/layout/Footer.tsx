@@ -20,6 +20,7 @@ export function Footer() {
               <li><Link href="/artists" className="text-muted-foreground hover:text-foreground transition-colors text-sm" data-testid="link-footer-artists">Artists</Link></li>
               <li><Link href="/vendors" className="text-muted-foreground hover:text-foreground transition-colors text-sm" data-testid="link-footer-vendors">Vendors</Link></li>
               <li><Link href="/venues" className="text-muted-foreground hover:text-foreground transition-colors text-sm" data-testid="link-footer-venues">Venues</Link></li>
+              <li><a href="/#events" className="text-muted-foreground hover:text-foreground transition-colors text-sm" data-testid="link-footer-events">Live Events</a></li>
               <li><Link href="/explore" className="text-muted-foreground hover:text-foreground transition-colors text-sm" data-testid="link-footer-explore">Explore All</Link></li>
             </ul>
           </div>

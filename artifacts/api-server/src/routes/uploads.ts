@@ -57,13 +57,13 @@ function ensureCloudinaryConfig() {
   });
 }
 
-function uploadToCloudinary(file: Express.Multer.File): Promise<UploadedMedia> {
+function uploadToCloudinary(file: Express.Multer.File, folder = "onfocus/partner-applications"): Promise<UploadedMedia> {
   const resourceType = file.mimetype.startsWith("video/") ? "video" : "image";
 
   return new Promise((resolvePromise, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
-        folder: `onfocus/partner-applications/${resourceType}s`,
+        folder: `${folder}/${resourceType}s`,
         resource_type: resourceType,
         unique_filename: true,
       },
@@ -89,6 +89,54 @@ function uploadToCloudinary(file: Express.Multer.File): Promise<UploadedMedia> {
     stream.end(file.buffer);
   });
 }
+
+const singleImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+});
+
+// -----------------------------------------------------------------------------
+// POST /api/uploads/image — Direct single image upload to Cloudinary (for events)
+// -----------------------------------------------------------------------------
+router.post(
+  "/image",
+  singleImageUpload.any(),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      ensureCloudinaryConfig();
+
+      const files = req.files as Express.Multer.File[] | undefined;
+      const file = files && files.length > 0 ? files[0] : req.file;
+
+      if (!file) {
+        res.status(400).json({ error: "No image file uploaded from device" });
+        return;
+      }
+
+      if (!file.mimetype.startsWith("image/")) {
+        res.status(400).json({ error: "Only image files (JPG, PNG, WEBP, GIF, SVG) are allowed" });
+        return;
+      }
+
+      const uploaded = await uploadToCloudinary(file, "onfocus/events");
+
+      res.status(200).json({
+        success: true,
+        url: uploaded.url,
+        publicId: uploaded.publicId,
+        format: uploaded.format,
+        bytes: uploaded.bytes,
+        width: uploaded.width,
+        height: uploaded.height,
+      });
+    } catch (err: any) {
+      console.error("Cloudinary event image upload error:", err);
+      res.status(500).json({
+        error: err?.message || "Failed to upload image to Cloudinary",
+      });
+    }
+  }
+);
 
 router.post(
   "/media",
@@ -129,19 +177,19 @@ router.post(
         return;
       }
 
-      const media = await Promise.all(files.map(uploadToCloudinary));
+      const media = await Promise.all(files.map((file) => uploadToCloudinary(file)));
 
       res.status(201).json({ media });
     } catch (err) {
-  console.error("Upload error:", err);
+      console.error("Upload error:", err);
 
-  const message =
-    err instanceof Error && err.name === "TimeoutError"
-      ? "Upload timed out. Please try a smaller file or check your internet connection."
-      : "Failed to upload media. Please check the file size and try again.";
+      const message =
+        err instanceof Error && err.name === "TimeoutError"
+          ? "Upload timed out. Please try a smaller file or check your internet connection."
+          : "Failed to upload media. Please check the file size and try again.";
 
-  res.status(500).json({ error: message });
-}
+      res.status(500).json({ error: message });
+    }
   },
 );
 

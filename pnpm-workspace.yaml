@@ -1,5 +1,7 @@
 packages:
-  - artifacts/*
+  - artifacts/api-server
+  - artifacts/mockup-sandbox
+  - artifacts/onfocus
   - lib/*
   - lib/integrations/*
   - scripts

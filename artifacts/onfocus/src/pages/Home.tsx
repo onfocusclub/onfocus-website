@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ListingCard, ListingCardSkeleton } from "@/components/ListingCard";
+import { EventsSection } from "@/components/EventsSection";
 
 export function Home() {
 
@@ -217,9 +218,11 @@ export function Home() {
         </div>
       </section>
 
+      {/* Events Section (BookMyShow pattern: The Best Of Live Events) */}
+      <EventsSection />
+
       {/* Stats Strip */}
-      {/* Stats Strip */}
-<section className="bg-background py-16 border-y border-border/50">
+      <section className="bg-background py-16 border-y border-border/50">
   <div className="container mx-auto px-6 md:px-8">
     <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
       <div className="flex flex-col items-center justify-center">

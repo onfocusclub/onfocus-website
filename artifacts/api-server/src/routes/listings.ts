@@ -182,7 +182,9 @@ router.patch("/listings/:id", async (req, res): Promise<void> => {
       ...(coverImage !== undefined && { coverImage }),
       ...(profileImage !== undefined && { profileImage }),
       ...(images !== undefined && { images }),
-      ...(portfolioItems !== undefined && { portfolioItems: JSON.stringify(portfolioItems) }),
+      ...(portfolioItems !== undefined && {
+        portfolioItems: typeof portfolioItems === "string" ? JSON.parse(portfolioItems) : portfolioItems,
+      }),
     })
     .where(eq(listingsTable.id, id))
     .returning();
